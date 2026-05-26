@@ -82,6 +82,14 @@ export default function ChatBot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
+
+      // Guard: if Vercel returns a non-200 (404, 500, etc.), it's likely HTML, not JSON.
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`API Error ${res.status}:`, errorText);
+        throw new Error(`Server returned ${res.status}`);
+      }
+
       const data = await res.json();
 
       if (data.error) throw new Error(data.error);
