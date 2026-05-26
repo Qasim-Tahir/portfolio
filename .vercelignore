@@ -1,0 +1,35 @@
+# Local dev only — never deploy
+scripts/
+ingest_requirements.txt
+
+# Knowledge base source files — already ingested into Qdrant
+docs/
+
+# Local environment — Vercel uses its own env var system
+.env.local
+.env
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Node artifacts (Vercel handles these, but be explicit)
+node_modules/
+
+# Editor/OS noise
+.DS_Store
+.vscode/
+*.swp
+
+scripts/
+docs/
+ingest_requirements.txt
+.env.local
+__pycache__/
+*.pyc
+main.py
+project_context.md
+project_setup.md
+security_tests.sh
