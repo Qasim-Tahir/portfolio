@@ -206,8 +206,8 @@ export default function Hero() {
 
           {/* THE CV BUTTON */}
           <a
-            href="/resume.pdf"
-            download="Qasim_Tahir_Resume.pdf"
+            href="/Qasim_Tahir_CV.pdf"
+            download="Qasim_Tahir_CV.pdf"
             className="btn btn-secondary"
             style={{
               padding: "0.8rem 1.8rem",
