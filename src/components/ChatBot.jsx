@@ -277,7 +277,7 @@ export default function ChatBot() {
               </button>
             </div>
 
-            <div className="chat-messages" data-lenis-prevent="true">
+            <div className="chat-messages">
               {messages.map((m, i) => (
                 <div
                   key={i}
