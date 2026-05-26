@@ -17,7 +17,7 @@ function App() {
   return (
     <ReactLenis
       root
-      options={{ lerp: 0.1, wheelMultiplier: 1.2, smoothWheel: true }}
+      options={{ lerp: 0.17, wheelMultiplier: 1.4, smoothWheel: true }}
     >
       <div className="app">
         <AnimatePresence mode="wait">
