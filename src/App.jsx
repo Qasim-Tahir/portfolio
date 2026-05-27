@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Nav from "./components/Nav";
 import Hero from "./components/Hero";
 import About from "./components/About";
@@ -46,6 +47,8 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
