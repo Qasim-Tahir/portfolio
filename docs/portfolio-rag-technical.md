@@ -23,7 +23,7 @@ Traditional injection filters fail against obfuscated prompts (e.g., zero-width 
 - **Spaced Letter Collapsing**: Removes extra spaces inserted between individual characters of key injection terms (e.g., `I G N O R E` -> `IGNORE`).
 - **Pattern Scanner**: Scans all messages in the conversation history (not just the final user message) against known malicious patterns (e.g., `IGNORE PREVIOUS`, `NEW SYSTEM PROMPT`, `ADMIN_OVERRIDE`).
 
-**Layer 2: Model-Based Safeguard (Llama-Guard)**
+**Layer 2: Model-Based Safeguard (GPT-OSS-Safeguard)**
 - A secondary, lightweight LLM safety shield model (`openai/gpt-oss-safeguard-20b`) is queried to analyze the user's intent.
 - **Fail-Closed Design**: If the safeguard model fails, times out, or hits rate limits, the request is immediately blocked by default.
 

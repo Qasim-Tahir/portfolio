@@ -107,7 +107,7 @@ export default function TerminalBoot({ onComplete }) {
         <motion.div variants={typeLine}>
           &nbsp;&nbsp;&nbsp;&nbsp;llm=
           <span style={{ color: "#00e6ff" }}>Groq</span>(model=
-          <span style={{ color: "#39ff14" }}>"llama-3.1-8b"</span>),
+          <span style={{ color: "#39ff14" }}>"qwen3.8-27b"</span>),
         </motion.div>
 
         <motion.div variants={typeLine}>

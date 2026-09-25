@@ -50,19 +50,23 @@ export default function About() {
                   lineHeight: 1.4,
                 }}
               >
-                I am Qasim Tahir, a Data Science student at FAST-NUCES with a
-                passion for <span className="accent">Generative AI</span> and{" "}
-                <span className="accent">RAG</span>.
+                I am Qasim Tahir, a Junior AI Engineer at The Services Tree,
+                building production <span className="accent">RAG</span> and{" "}
+                <span className="accent">LLM</span> systems while finishing my
+                Data Science degree at FAST-NUCES.
               </p>
               <p
                 className="dim"
                 style={{ fontSize: "1.1rem", marginBottom: "2.5rem" }}
               >
-                My journey in AI is driven by the desire to make information
-                more accessible and actionable. From building GraphRAG pipelines
-                that understand research papers to creating multi-modal systems
-                for religious scripture retrieval, I focus on building systems
-                that don't just process data, but understand it.
+                My work spans directing AI-assisted development on an
+                internal AI-powered ERP, diagnosing production reliability
+                and data-integrity bugs, and hardening AI systems for
+                security &mdash; alongside building GraphRAG pipelines that
+                understand research papers and multi-modal systems for
+                religious scripture retrieval. I focus on systems that don't
+                just process data, but understand it, and hold up in
+                production.
               </p>
             </div>
 
@@ -137,6 +141,36 @@ export default function About() {
                   }}
                 >
                   University
+                </div>
+              </div>
+              <div
+                style={{
+                  flex: "1 1 auto",
+                  background: "var(--glass)",
+                  padding: "1rem 1.5rem",
+                  borderRadius: "16px",
+                  border: "1px solid var(--glass-border)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: 800,
+                    color: "var(--fg)",
+                  }}
+                >
+                  Jr. AI Engineer
+                </div>
+                <div
+                  className="dim"
+                  style={{
+                    fontSize: "0.75rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    fontWeight: 600,
+                  }}
+                >
+                  The Services Tree
                 </div>
               </div>
             </div>

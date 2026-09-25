@@ -13,6 +13,11 @@ const SKILLS = [
       "Neo4j",
       "PyTorch",
       "TensorFlow",
+      "Keras",
+      "Ragas",
+      "NER",
+      "Docling",
+      "MCP",
     ],
   },
   {
@@ -23,12 +28,26 @@ const SKILLS = [
   {
     category: "Backend",
     icon: <Server size={20} />,
-    items: ["FastAPI", "Flask", "Node.js", "Docker", "Azure", "PostgreSQL"],
+    items: [
+      "Python",
+      "TypeScript",
+      "SQL",
+      "FastAPI",
+      "Flask",
+      "Next.js",
+      "Node.js",
+      "Celery",
+      "Redis",
+      "MongoDB",
+      "PostgreSQL",
+      "Docker",
+      "Azure",
+    ],
   },
   {
     category: "Tools",
     icon: <Wrench size={20} />,
-    items: ["n8n", "Groq", "Git", "Linux"],
+    items: ["n8n", "Groq", "uv", "Tailwind CSS", "Git", "Github", "Linux"],
   },
 ];
 
@@ -60,7 +79,12 @@ export default function Skills() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: i * 0.05 }}
-            style={{ display: "flex", height: "100%" }}
+            style={{
+              display: "flex",
+              height: "100%",
+              gridColumn:
+                skill.items.length > 8 ? "span 2" : "span 1",
+            }}
           >
             {/* The CSS .card class is now safely on the inner div */}
             <div

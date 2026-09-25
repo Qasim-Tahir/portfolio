@@ -15,7 +15,7 @@ The project is built as a lightweight, production-ready Serverless RAG applicati
 1. **Frontend**: A high-performance React (Vite) single-page application deployed to Vercel's global edge network. It features a custom glassmorphic layout, fluid Framer Motion animations, and secure markdown formatting.
 2. **Backend API**: A serverless Python function running at `/api/chat.py`, dynamically provisioned by Vercel. It handles CORS, rate limiting, request validation, injection filtering, semantic vector retrieval, and LLM orchestration.
 3. **Vector Database**: Qdrant Cloud (managed cluster), which stores document chunks and serves semantic similarity queries with sub-second latency.
-4. **LLM Inference**: Groq Cloud running `llama-3.1-8b-instant` for ultra-fast (sub-second) response generation.
+4. **LLM Inference**: Groq Cloud running `qwen/qwen3.8-27b` for ultra-fast (sub-second) response generation.
 
 ## Key Design Decisions
 
@@ -29,12 +29,12 @@ The project is built as a lightweight, production-ready Serverless RAG applicati
 - **Frontend**: React, Vite, Framer Motion, Lucide Icons, ReactMarkdown, Rehype-Sanitize.
 - **Backend**: Python, FastAPI, Vercel Serverless, Uvicorn, Python-dotenv.
 - **AI & Retrieval**: Qdrant Client, Groq API, LangChain.
-- **Models**: `llama-3.1-8b-instant` (Inference), `all-minilm-l6-v2` (Embeddings).
+- **Models**: `qwen/qwen3.8-27b` (Inference), `all-minilm-l6-v2` (Embeddings).
 
 ## FAQ
 
 **Q: How does the portfolio chatbot fetch its answers?**
-A: When a user asks a question, the backend API first validates and cleans the input. It then generates a semantic embedding of the query and queries the Qdrant Cloud collection to retrieve the top 5 most relevant markdown documentation chunks. These chunks are injected as context into a system prompt that guides Groq Llama 3.1 to generate a precise, factual answer.
+A: When a user asks a question, the backend API first validates and cleans the input. It then generates a semantic embedding of the query and queries the Qdrant Cloud collection to retrieve the top 5 most relevant markdown documentation chunks. These chunks are injected as context into a system prompt that guides Groq's Qwen3 model to generate a precise, factual answer.
 
 **Q: What makes this RAG pipeline production-ready?**
 A: It includes production-grade security, such as:

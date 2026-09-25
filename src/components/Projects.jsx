@@ -4,6 +4,7 @@ import {
   FileText,
   Zap,
   BookOpen,
+  MessageSquare,
   Github,
   ExternalLink,
   ArrowRight,
@@ -12,8 +13,8 @@ import {
 const PROJECTS = [
   {
     title: "CogniSynth",
-    desc: "Multi-modal GraphRAG + VLM pipeline for deep understanding of ML/AI research papers. Features dual NER and Neo4j relational retrieval.",
-    tech: ["Neo4j", "Groq", "Docling", "Llama 3"],
+    desc: "4-stage GraphRAG pipeline ingesting research papers into a Neo4j knowledge graph, with a two-pass VLM figure enrichment module and hallucination detection. Scored 82.46% composite on a custom 4-axis eval benchmarked against GPT-5.5 and Gemini 3.1 Pro via Ragas.",
+    tech: ["Neo4j", "GraphRAG", "BGE-Reranker", "Ragas", "Three.js"],
     icon: <Microscope size={20} />,
     flow: ["PDFs", "VLM + NER", "Graph DB"],
     gradient:
@@ -45,6 +46,15 @@ const PROJECTS = [
     flow: ["Query", "Embedding", "Vector DB"],
     gradient:
       "linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(253, 224, 71, 0.05) 100%)",
+  },
+  {
+    title: "AI Portfolio Engine",
+    desc: "This site's production RAG chatbot — Qdrant + Groq over project documentation with source-attributed, sub-second answers, behind a 4-layer LLM security pipeline (injection detection, safeguard classification, persona-hardened prompts, output sanitization).",
+    tech: ["Qdrant", "Groq", "LangChain", "Vercel"],
+    icon: <MessageSquare size={20} />,
+    flow: ["Docs", "RAG + Security", "Chat UI"],
+    gradient:
+      "linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(251, 182, 206, 0.05) 100%)",
   },
 ];
 

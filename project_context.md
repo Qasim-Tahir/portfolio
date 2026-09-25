@@ -13,11 +13,11 @@ Build and deploy a personal portfolio website for **Qasim Tahir** (AI/ML Enginee
 ## Personal Info
 
 **Name:** Qasim Tahir
-**Role:** AI/ML Engineer (Aspiring)
+**Role:** Junior AI Engineer, The Services Tree (TST) — also BS Data Science student, FAST-NUCES
 **Education:** BS Data Science, FAST-NUCES — Sep 2021 to Present
-**Aesthetic:** Glassmorphic Dark Mode with smooth scroll (ReactLenis)
+**Aesthetic:** Glassmorphic Dark Mode with native browser smooth scrolling (`html { scroll-behavior: smooth }`); Lenis was removed in favor of this
 
-**Professional Summary:** Strong fundamentals in LLMs, Generative AI, and NLP. Experienced in building Multi-Modal RAG pipelines and automation workflows.
+**Professional Summary:** AI Engineer focused on production LLM systems, RAG, knowledge graphs, evaluation, and secure AI deployment. At TST, owns translation of stakeholder requirements into engineering specs for an internal AI-powered ERP and directs AI-assisted development end-to-end (architecture, implementation review, debugging, security validation, production deployment).
 
 ---
 
@@ -64,16 +64,39 @@ Build and deploy a personal portfolio website for **Qasim Tahir** (AI/ML Enginee
 - Video pipeline: extracts audio from YouTube, Instagram, Facebook
 - Stack: Python, RAG, OCR, Whisper
 
+### 5. AI Portfolio Engine (this site)
+
+**Period:** 2026
+
+- This site's own production RAG chatbot: Qdrant + Groq over 10 project documentation files, source-attributed sub-second answers via a markdown-aware LangChain ingestion pipeline
+- 4-layer LLM security pipeline: regex injection detection with unicode/homoglyph normalization, `gpt-oss-safeguard-20b` classification, persona-hardened prompts, output sanitization
+- Deployed as a serverless React frontend on Vercel with in-memory rate limiting, CSP/X-Frame-Options headers, sub-4s responses within Vercel's 10s function constraint
+- Stack: Qdrant, Groq (`qwen/qwen3.8-27b`), LangChain, Vercel
+
+---
+
+## Work Experience: The Services Tree (TST)
+
+**Role:** Junior AI Engineer — Jul 2026 to Present
+
+- Translates stakeholder requirements into engineering specs for an internal AI-powered ERP, and directs AI-assisted development using Claude Code — owning requirements decomposition, architecture, implementation review, debugging, security validation, and production deployment. Resolved 115+ tickets as primary technical owner.
+- Built an automated AI screening voice agent that conducts and screens candidate interviews.
+- Contributed to the company's "Second Brain" — an org-wide knowledge ingestion and triage pipeline (email, calendar, Teams, WhatsApp, RSS, blogs, YouTube) feeding a PostgreSQL-backed Knowledge Inbox with LLM-based triage.
+- Diagnosed and fixed a silent SQL aggregation bug in a company-wide KPI/analytics dashboard that was dropping ~95% of records in one metric.
+- Diagnosed and fixed production AI reliability issues in the KPI pipeline: a broken model-fallback path that silently failed assessments when API credits were exhausted, and non-deterministic scoring producing inconsistent results from identical inputs.
+
+This is represented on the site by the `Experience.jsx` component (new "Work at TST" section, between About and Skills), including a workflow diagram: Stakeholder Needs → Engineering Spec → Claude-Code-Directed Build → Review/Debug/Secure → Production Deploy.
+
 ---
 
 ## Skills
 
-| Category   | Technologies                                                             |
-| ---------- | ------------------------------------------------------------------------ |
-| AI/ML      | LangChain, LlamaIndex, LangGraph, HuggingFace, Neo4j, PyTorch, TensorFlow |
-| Vector DBs | Qdrant, ChromaDB, FAISS, Pinecone                                        |
-| Backend    | FastAPI, Flask, Node.js, Docker, Azure, PostgreSQL                        |
-| Tools      | n8n, Groq, Git, Linux                                                    |
+| Category   | Technologies                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------ |
+| AI/ML      | LangChain, LlamaIndex, LangGraph, HuggingFace, Neo4j, PyTorch, TensorFlow, Keras, Ragas, NER, Docling, MCP |
+| Vector DBs | Qdrant, ChromaDB, FAISS, Pinecone                                                                      |
+| Backend    | Python, TypeScript, SQL, FastAPI, Flask, Next.js, Node.js, Celery, Redis, MongoDB, PostgreSQL, Docker, Azure |
+| Tools      | n8n, Groq, uv, Tailwind CSS, Git, Github, Linux                                                        |
 
 ---
 
@@ -85,8 +108,8 @@ Build and deploy a personal portfolio website for **Qasim Tahir** (AI/ML Enginee
 **Backend:** Python serverless function at `/api/chat.py` — Vercel `BaseHTTPRequestHandler`
 **Vector DB:** Qdrant Cloud with `cloud_inference=True` — embedding handled server-side by Qdrant
 **Embeddings:** `sentence-transformers/all-MiniLM-L6-v2` via Qdrant Cloud Inference (384-dim). Both ingestion and query use `Document(text=..., model=EMBED_MODEL)` — no local embedding library needed at runtime.
-**Inference:** Groq + `llama-3.1-8b-instant` — sub-second responses
-**Smooth Scroll:** `@studio-freight/react-lenis` wrapping the entire app (`lerp: 0.1`, `wheelMultiplier: 1.2`)
+**Inference:** Groq + `qwen/qwen3.8-27b` — sub-second responses
+**Smooth Scroll:** Native browser smooth scrolling via `html { scroll-behavior: smooth }` in `index.css` (Lenis was removed; see decision log)
 
 **Why this stack:**
 
@@ -144,25 +167,27 @@ web/
 │   └── ingest.py                 # local ingestion: Chunk → Embed (Cloud Inference) → Upsert to Qdrant
 │
 ├── src/                          # Vite + React Frontend Application
-│   ├── App.jsx                   # Root layout: ReactLenis smooth scroll → AnimatePresence →
-│   │                             #   TerminalBoot (intro) → main content sections
+│   ├── App.jsx                   # Root layout: AnimatePresence → TerminalBoot (intro) → main sections
 │   ├── index.css                 # Custom glassmorphic dark-mode stylesheet with CSS variables,
 │   │                             #   responsive breakpoints, and smooth scroll (html { scroll-behavior: smooth })
 │   ├── main.jsx                  # React 18 entrypoint (StrictMode → App)
 │   └── components/
-│       ├── About.jsx             # Two-card grid: bio + philosophy with education badges
+│       ├── About.jsx             # Two-card grid: bio + philosophy, with BS DS / FAST / Jr. AI Engineer badges
 │       ├── ChatBot.jsx           # RAG ChatBot widget with tooltip peek, click-outside dismiss,
 │       │                         #   pulse animation, ReactMarkdown rendering, source badges
 │       ├── Contact.jsx           # Contact section with email obfuscation, social links, footer
+│       ├── Experience.jsx        # "Work at TST" section: stakeholder-to-production workflow diagram
+│       │                         #   + 5 highlight cards (ERP, voice agent, Second Brain, KPI bugs)
 │       ├── Hero.jsx              # Centered hero with word-reveal animation, ambient gradient orbs,
 │       │                         #   resume download button, CTA buttons
 │       ├── Nav.jsx               # Fixed navbar with smooth-scroll anchors, mobile hamburger drawer
-│       ├── Projects.jsx          # Project cards grid with data-flow pipeline visualization,
+│       ├── Projects.jsx          # 5 project cards with data-flow pipeline visualization,
 │       │                         #   tech pills, GitHub/demo links
-│       ├── Skills.jsx            # Four-category skill grid (AI/ML, Vector DBs, Backend, Tools)
+│       ├── Skills.jsx            # Four-category skill grid (AI/ML, Vector DBs, Backend, Tools);
+│       │                         #   AI/ML and Backend span 2 grid columns (more items, kept compact)
 │       └── TerminalBoot.jsx      # Animated Python-style boot sequence intro screen (4s duration)
 │
-└── public/                       # Static assets (currently empty; resume.pdf expected here)
+└── public/                       # Static assets (Qasim_Tahir_CV.pdf lives here)
 ```
 
 ---
@@ -173,6 +198,8 @@ web/
 {
   "dependencies": {
     "@studio-freight/react-lenis": "^0.0.47",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^11.2.10",
     "lucide-react": "^0.395.0",
     "react": "^18.3.1",
@@ -181,12 +208,19 @@ web/
     "rehype-sanitize": "^6.0.0"
   },
   "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.3.1",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "vite": "^5.4.21"
   }
 }
 ```
+
+Note: `@studio-freight/react-lenis` remains in `package.json` but is no longer imported anywhere — Lenis was ripped out of `App.jsx` in favor of native `scroll-behavior: smooth` (see decision log). It's dead weight in the dependency tree, not a live behavior.
 
 ---
 
@@ -298,7 +332,7 @@ export default defineConfig({
 2. Embed the latest user message using Qdrant Cloud Inference (`Document` with `sentence-transformers/all-minilm-l6-v2`)
 3. Query Qdrant for top-5 chunks by cosine similarity (named vector: `content_vector`)
 4. Construct system prompt with retrieved context injected
-5. Call Groq (`llama-3.1-8b-instant`, max 512 tokens, temp 0.3)
+5. Call Groq (`qwen/qwen3.8-27b`, max 512 tokens, temp 0.3)
 6. Sanitize reply → Return `{ reply: string, sources: string[] }`
 
 ### CORS
@@ -313,11 +347,11 @@ export default defineConfig({
 
 ### App Component (`App.jsx`)
 
-The root component wraps the entire application in `ReactLenis` for smooth scroll, then uses `AnimatePresence` for a boot → main transition:
+The root component uses `AnimatePresence` for a boot → main transition (native CSS smooth scroll, no scroll library):
 
 1. **TerminalBoot** — 4-second animated Python-style boot sequence (`from portfolio.agent import RAG_Assistant`)
 2. **Main App** — Fades in after boot completes, rendering all sections in order:
-   `Nav → Hero → About → Skills → Projects → ChatBot → Contact`
+   `Nav → Hero → About → Experience → Skills → Projects → ChatBot → Contact`
 
 ### Component Details
 
@@ -326,9 +360,10 @@ The root component wraps the entire application in `ReactLenis` for smooth scrol
 | `TerminalBoot`  | Fira Code monospace, staggered clip-path reveal, blinking cursor, 4s auto-complete                  |
 | `Nav`           | Fixed position, backdrop blur, scroll detection for border, smooth-scroll anchor links, mobile drawer |
 | `Hero`          | Word-by-word reveal animation, ambient gradient orbs, resume download button, centered layout        |
-| `About`         | Two-card responsive grid (bio + philosophy), education badges (BS DS / FAST)                         |
-| `Skills`        | 4 categories: AI/ML, Vector DBs, Backend, Tools. Uses `tech-pill` CSS class                          |
-| `Projects`      | 4 project cards with data-flow pipeline visualization (3-step arrows), tech pills, action links      |
+| `About`         | Two-card responsive grid (bio + philosophy), three badges (BS DS / FAST University / Jr. AI Engineer @ TST) |
+| `Experience`    | "Work at TST" workflow diagram (5-step flow) + 5 highlight cards, each sized to its own content (`alignItems: start` on the grid, no forced card-height stretch) |
+| `Skills`        | 4 categories: AI/ML, Vector DBs, Backend, Tools. AI/ML and Backend span 2 grid columns to keep pill-heavy cards compact. Uses `tech-pill` CSS class |
+| `Projects`      | 5 project cards with data-flow pipeline visualization (3-step arrows), tech pills, action links      |
 | `ChatBot`       | Fixed-position widget, pulse animation CTA, delayed tooltip peek, click-outside dismiss, ReactMarkdown with rehype-sanitize, typing indicator, source badges |
 | `Contact`       | Email obfuscation (JS concatenation), GitHub/LinkedIn social links, MapPin location, footer           |
 
@@ -346,7 +381,7 @@ The root component wraps the entire application in `ReactLenis` for smooth scrol
 ## Chatbot UX Design
 
 **Widget name:** "Project RAG Engine"
-**Subtitle:** "Qdrant · Groq · Llama 3.1"
+**Subtitle:** "Qdrant · Groq · Qwen3"
 
 **CTA Button:** "Ask AI Agent" with Sparkles icon and pulse-ring animation (3s infinite)
 **Delayed Tooltip:** Appears after 5 seconds if chat not opened: "I'm a live RAG pipeline. Ask me how Qasim's architecture works."
@@ -443,3 +478,13 @@ The FAQ section is the highest-leverage part — write explicit Q&A for every qu
 - **Context:** In early iterations, query endpoints would fail with a `Not existing vector name error: content_vector` if the ingestion pipeline didn't name the vector explicitly or if it was omitted.
 - **Resolution/Alignment:** The pipeline was unified. `scripts/ingest.py` explicitly creates the collection with a named vector parameter `content_vector` (384-dim, cosine) and upserts under this key using Qdrant Cloud Inference `Document` objects. In turn, `api/chat.py` queries Qdrant with `using="content_vector"` and also uses `Document` objects for embedding. Both files are fully aligned on using this named vector config.
 - **Verification:** Local FastAPI server and `security_tests.sh` pass cleanly showing that the RAG retrieval endpoint resolves and queries successfully.
+
+**Issue:** Qdrant Cloud Cluster Removed Due to Inactivity (Sep 2026)
+- **Context:** The free-tier Qdrant Cloud cluster backing the `portfolio` collection was automatically removed after a period of inactivity, taking the ingested vectors with it.
+- **Resolution:** A new Qdrant Cloud cluster was provisioned; `QDRANT_URL` and `QDRANT_API_KEY` in `.env.local` (and the Vercel production env) were updated to point at it. `scripts/ingest.py` was re-run against the current `docs/` set, recreating the `content_vector` (384-dim, cosine) collection and upserting 219 chunks across all 10 markdown docs.
+- **Verification:** `scripts/check_qdrant.py` confirmed `points_count = 219`. A direct end-to-end test (embed query → `query_points` against Qdrant Cloud Inference → inject retrieved chunks into a Groq `qwen/qwen3.8-27b` call) returned relevant chunks and a valid grounded completion, confirming both retrieval and generation work against the new cluster.
+
+**Decision:** Chat Model Swapped from Llama 3.1 to Qwen3 (Sep 2026)
+- **Change:** `api/chat.py`'s persona-hardened generation call (Layer 3) now uses `qwen/qwen3.8-27b` instead of `llama-3.1-8b-instant`. The Layer 2 safeguard classifier (`openai/gpt-oss-safeguard-20b`) is unchanged.
+- **Context:** `qwen/qwen3.8-27b` is a Groq preview model. At the default `reasoning_effort` setting it does not emit `<think>` reasoning tokens into the response, so no `reasoning_format` override was needed to keep output clean.
+- **Docs kept in sync:** `docs/portfolio-rag.md` and `docs/portfolio-rag-technical.md` (which the RAG chatbot itself retrieves from) were updated to reference the new model, so the chatbot doesn't describe itself using stale facts.

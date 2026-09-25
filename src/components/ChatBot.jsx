@@ -261,7 +261,7 @@ export default function ChatBot() {
                 </div>
                 <div>
                   <div className="chat-title">Project RAG Engine</div>
-                  <div className="chat-meta">Qdrant · Groq · Llama 3.1</div>
+                  <div className="chat-meta">Qdrant · Groq · Qwen3</div>
                 </div>
               </div>
               <button
