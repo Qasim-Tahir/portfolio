@@ -1,3 +1,5 @@
+import { validateCitations } from "./citations.js";
+
 export const MAX_INPUT_LENGTH = 2000;
 export const CHAT_TIMEOUT_MS = 30_000;
 const MAX_BODY_BYTES = 32_768;
@@ -89,7 +91,13 @@ export class ChatSession {
               || !Array.isArray(data.sources) || data.sources.some(source => typeof source !== "string")) {
             throw new ChatError("The service returned an invalid response. Please try again.", 503);
           }
-          return data;
+          let citations;
+          try {
+            citations = validateCitations(data);
+          } catch {
+            throw new ChatError("The service returned invalid source passages. Please try again.", 503);
+          }
+          return { ...data, citations };
         })(),
         canceled,
       ]);

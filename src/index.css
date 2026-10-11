@@ -541,3 +541,13 @@ main, .skill-group, .bubble, .msg { min-width: 0; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition-duration: 0s !important; }
 }
+
+.project-actions { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+.project-actions > * { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 500; }
+.project-code-link, .project-unavailable { color: var(--text-dim); }
+.project-actions button { border: none; background: none; color: var(--accent); cursor: pointer; font-family: inherit; }
+.citation-list { width: 100%; }
+.citation { border: 1px solid var(--border); border-radius: 8px; margin-top: 0.5rem; padding: 0.5rem; overflow-wrap: anywhere; }
+.citation summary { cursor: pointer; color: var(--text-dim); }
+.citation blockquote { white-space: pre-wrap; margin: 0.75rem 0; padding-left: 0.75rem; border-left: 2px solid var(--accent); color: var(--fg); font-size: 0.8rem; }
+.citation p { margin: 0.5rem 0; font-size: 0.7rem; }

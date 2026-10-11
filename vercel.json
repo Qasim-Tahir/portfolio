@@ -8,7 +8,7 @@
       "destination": "/api/chat.py"
     },
     {
-      "source": "/((?!assets/).*)",
+      "source": "/((?!api/|assets/|favicon[.]svg$|social-preview[.]png$|social-preview[.]svg$|Qasim_Tahir_CV[.]pdf$).*)",
       "destination": "/index.html"
     }
   ],

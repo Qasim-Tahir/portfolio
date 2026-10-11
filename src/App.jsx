@@ -14,6 +14,7 @@ import TerminalBoot from "./components/TerminalBoot";
 
 function App() {
   const [isBooting, setIsBooting] = useState(true);
+  const [chatOpenRequest, setChatOpenRequest] = useState(0);
   const reducedMotion = useReducedMotion();
   const initialFragmentHandled = useRef(false);
   const restoreInitialFragment = () => {
@@ -73,8 +74,8 @@ function App() {
                 <About />
                 <Experience />
                 <Skills />
-                <Projects />
-                <ChatBot />
+                <Projects onOpenChat={() => setChatOpenRequest(value => value + 1)} />
+                <ChatBot openRequest={chatOpenRequest} />
                 <Contact />
               </motion.main>
             </motion.div>

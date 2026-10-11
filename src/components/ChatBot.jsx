@@ -14,7 +14,7 @@ const STARTERS = [
   "What vision models are used in the OCR summarizer?",
 ];
 
-export default function ChatBot() {
+export default function ChatBot({ openRequest = 0 }) {
   const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,6 +59,11 @@ export default function ChatBot() {
     setShowStarters(true);
   }
 
+  useEffect(() => {
+    if (!openRequest) return;
+    setIsOpen(true);
+    setShowTooltip(false);
+  }, [openRequest]);
   useEffect(() => () => sessionRef.current.cancel(), []);
   useEffect(() => {
     function handleClickOutside(event) {
@@ -117,7 +122,7 @@ export default function ChatBot() {
     try {
       const data = await sessionRef.current.send(userMsg);
       if (requestId !== requestIdRef.current) return;
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply, sources: data.sources }]);
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply, sources: data.sources, citations: data.citations }]);
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       setError(err.message);
@@ -345,18 +350,26 @@ export default function ChatBot() {
                       </ReactMarkdown>
                     </div>
 
-                    {m.sources && m.sources.length > 0 && (
-                      <div className="sources">
-                        Sources:{" "}
-                        {m.sources.map((s) => (
-                          <span
-                            key={s}
-                            className="badge"
-                            style={{ marginLeft: "4px" }}
-                          >
-                            {s}
-                          </span>
+                    {m.citations?.length > 0 ? (
+                      <div className="sources citation-list" aria-label="Answer evidence">
+                        {m.citations.map(citation => (
+                          <details key={citation.label} className="citation">
+                            <summary>
+                              <span className="badge">[{citation.label}]</span>{" "}
+                              {citation.project} · {citation.section || citation.source}
+                            </summary>
+                            <blockquote>{citation.excerpt}</blockquote>
+                            <p>{citation.source}{citation.subsection ? ` · ${citation.subsection}` : ""}</p>
+                            <p>Document version: {citation.document_version || "unavailable for this legacy document"}</p>
+                            <p>Chunk: {citation.chunk_id}</p>
+                            <p>Retrieval similarity: {citation.score.toFixed(3)}. This score does not verify the answer.</p>
+                          </details>
                         ))}
+                      </div>
+                    ) : m.sources?.length > 0 && (
+                      <div className="sources">
+                        Retrieved documents (passages unavailable):{" "}
+                        {m.sources.map(source => <span key={source} className="badge">{source}</span>)}
                       </div>
                     )}
                   </div>

@@ -13,6 +13,7 @@ import {
 const PROJECTS = [
   {
     title: "CogniSynth",
+    repo: null,
     desc: "4-stage GraphRAG pipeline ingesting research papers into a Neo4j knowledge graph, with a two-pass VLM figure enrichment module and hallucination detection. Scored 82.46% composite on a custom 4-axis eval benchmarked against GPT-5.5 and Gemini 3.1 Pro via Ragas.",
     tech: ["Neo4j", "GraphRAG", "BGE-Reranker", "Ragas", "Three.js"],
     icon: <Microscope size={20} />,
@@ -22,6 +23,7 @@ const PROJECTS = [
   },
   {
     title: "LuminaNotes",
+    repo: "https://github.com/Qasim-Tahir/Lecture-Notes-Summarizer-OCR",
     desc: "Vision-first OCR and academic summarization system. Processes PDFs, PPTX, and videos into Notion-ready study guides.",
     tech: ["Llama 3 Vision", "Whisper", "FastAPI"],
     icon: <FileText size={20} />,
@@ -31,6 +33,7 @@ const PROJECTS = [
   },
   {
     title: "Invoice Automation",
+    repo: null,
     desc: "End-to-end n8n workflow for structured data extraction from multi-format invoices using Vision-Language Models.",
     tech: ["n8n", "VLM", "Python"],
     icon: <Zap size={20} />,
@@ -40,6 +43,7 @@ const PROJECTS = [
   },
   {
     title: "Islamic Source Finder",
+    repo: "https://github.com/Qasim-Tahir/IslamicSourceFinder",
     desc: "Multi-modal semantic retrieval system for religious texts, supporting text, image, audio, and video queries.",
     tech: ["ChromaDB", "OCR", "Whisper"],
     icon: <BookOpen size={20} />,
@@ -49,7 +53,9 @@ const PROJECTS = [
   },
   {
     title: "AI Portfolio Engine",
-    desc: "This site's production RAG chatbot — Qdrant + Groq over project documentation with source-attributed, sub-second answers, behind a 4-layer LLM security pipeline (injection detection, safeguard classification, persona-hardened prompts, output sanitization).",
+    repo: "https://github.com/Qasim-Tahir/portfolio",
+    demo: "chat",
+    desc: "This site's RAG chatbot: Qdrant and Groq over project documentation, with inspectable source passages. It validates requests and citation quotes, classifies conversations, and applies injection-pattern filters.",
     tech: ["Qdrant", "Groq", "LangChain", "Vercel"],
     icon: <MessageSquare size={20} />,
     flow: ["Docs", "RAG + Security", "Chat UI"],
@@ -58,7 +64,7 @@ const PROJECTS = [
   },
 ];
 
-export default function Projects() {
+export default function Projects({ onOpenChat }) {
   return (
     <section tabIndex={-1} id="projects">
       <motion.div
@@ -227,44 +233,28 @@ export default function Projects() {
                 ))}
               </div>
 
-              {/* Action Links anchored to the bottom */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1.5rem",
-                  marginTop: "auto",
-                  paddingTop: "1.5rem",
-                  borderTop: "1px solid var(--border)",
-                }}
-              >
-                <a
-                  href="#"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 500,
-                    color: "var(--text-dim)",
-                  }}
-                  className="project-code-link"
-                >
-                  <Github size={16} /> Code
-                </a>
-                <a
-                  href="#"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 500,
-                    color: "var(--accent)",
-                  }}
-                  className="project-demo-link"
-                >
-                  <ExternalLink size={16} /> Live Demo
-                </a>
+              <div className="project-actions">
+                {project.repo ? (
+                  <a href={project.repo} target="_blank" rel="noopener noreferrer"
+                    aria-label={`View ${project.title} source code on GitHub`}
+                    className="project-code-link">
+                    <Github size={16} /> Code
+                  </a>
+                ) : (
+                  <span className="project-unavailable" aria-label={`${project.title} source code unavailable`}>
+                    <Github size={16} /> Code unavailable
+                  </span>
+                )}
+                {project.demo === "chat" ? (
+                  <button onClick={onOpenChat} className="project-demo-link"
+                    aria-label="Open AI Portfolio Engine demo chat">
+                    <ExternalLink size={16} /> Live Demo
+                  </button>
+                ) : (
+                  <span className="project-unavailable" aria-label={`${project.title} demo unavailable`}>
+                    <ExternalLink size={16} /> Demo unavailable
+                  </span>
+                )}
               </div>
             </div>
           </motion.div>
