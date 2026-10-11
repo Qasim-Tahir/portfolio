@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import fakeredis
 import httpx
 
-from api.rate_limit import SharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
+from server.rate_limit import SharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
 from test_chat import invoke, VALID, client_for
 from api import chat
 

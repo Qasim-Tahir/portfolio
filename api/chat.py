@@ -11,7 +11,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Document
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from httpx import TimeoutException
-from api.rate_limit import SharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
+from server.rate_limit import SharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
 from groq import Groq, APITimeoutError, APIConnectionError, APIStatusError
 
 # Load environment variables
