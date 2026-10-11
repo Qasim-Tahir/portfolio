@@ -118,6 +118,8 @@ class ChatTests(unittest.TestCase):
         with patch.object(chat, 'get_clients', return_value=(q, self.client)):
             q.query_points.return_value = NS(points=[NS(payload={'text':'Public architecture', 'source':s}) for s in ['b','a','b']])
             self.assertEqual(chat.retrieve('Question')[1], ['b', 'a'])
+            q.query_points.return_value = NS(points=[NS(payload={'text':'DUMP_START is a documented red-team marker.', 'source':'public-security-doc'})])
+            self.assertIn('DUMP_START', chat.retrieve('Question')[0])
             q.query_points.side_effect = chat.ResponseHandlingException(httpx.ReadTimeout('timeout'))
             with self.assertRaises(TimeoutError):
                 chat.retrieve('Question')

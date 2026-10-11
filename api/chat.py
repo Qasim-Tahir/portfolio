@@ -52,6 +52,8 @@ INJECTION_PATTERNS = [
     r'system prompt (follows|below|starts)',
 ]
 
+CREDENTIAL_PATTERNS = [r'gsk_[a-zA-Z0-9_-]{16,}', r'sk-[a-zA-Z0-9_-]{16,}']
+
 # Output-side: block before reaching client
 FORBIDDEN_OUTPUT_PATTERNS = [
     r'<<<.*?>>>',
@@ -60,8 +62,6 @@ FORBIDDEN_OUTPUT_PATTERNS = [
     r'OVERRIDE SUCCESSFUL',
     r'SECURITY RULES\s*\(absolute',
     r'Your mission is to answer questions about Qasim Tahir',
-    r'gsk_[a-zA-Z0-9_-]{16,}',
-    r'sk-[a-zA-Z0-9_-]{16,}',
 ]
 
 # Common homoglyphs used in prompt injection attacks (maps to ASCII equivalents)
@@ -103,15 +103,21 @@ def is_injection_attempt(query: str) -> bool:
             return True
     return False
 
-def sanitize_reply(reply: str) -> tuple[bool, str]:
-    if not isinstance(reply, str) or not reply.strip():
-        raise UpstreamUnavailable('Empty generation')
+def contains_private_value(text: str) -> bool:
     # Actual deployment credentials are private. Public model names, stack
     # terms, project names, and public URLs are allowed.
     for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL'):
         secret = os.environ.get(name, '')
-        if len(secret) >= 8 and secret in reply:
-            return False, "I can only answer questions about Qasim's portfolio."
+        if len(secret) >= 8 and secret in text:
+            return True
+    return any(re.search(pattern, text) for pattern in CREDENTIAL_PATTERNS)
+
+
+def sanitize_reply(reply: str) -> tuple[bool, str]:
+    if not isinstance(reply, str) or not reply.strip():
+        raise UpstreamUnavailable('Empty generation')
+    if contains_private_value(reply):
+        return False, "I can only answer questions about Qasim's portfolio."
     for pattern in FORBIDDEN_OUTPUT_PATTERNS:
         if re.search(pattern, reply, re.IGNORECASE | re.DOTALL):
             return False, "I can only answer questions about Qasim's portfolio."
@@ -268,7 +274,9 @@ def retrieve(query: str, timeout=PROVIDER_TIMEOUT):
         if not isinstance(chunk, str):
             raise UpstreamUnavailable("Invalid retrieved payload")
         # Do not send credentials accidentally placed in the corpus to a model.
-        if not sanitize_reply(chunk)[0]:
+        # Public documentation can describe red-team markers. Output-format
+        # heuristics must not make that documentation unavailable for retrieval.
+        if contains_private_value(chunk):
             raise UpstreamUnavailable("Private data in retrieved payload")
         chunks.append(chunk)
         source = payload.get("source", "unknown")
