@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Send, X, Bot, User, Sparkles } from "lucide-react";
+import { Send, X, Bot, User, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
+import { ChatSession, MAX_INPUT_LENGTH } from "../lib/chatSession";
+
+const GREETING = { role: "assistant", content: "Hi! I'm a live RAG pipeline running on Qdrant + Groq, querying Qasim's actual project documentation. Ask me anything technical about his work." };
 
 const STARTERS = [
   "How is the knowledge graph built in CogniSynth?",
@@ -12,13 +15,7 @@ const STARTERS = [
 ];
 
 export default function ChatBot() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm a live RAG pipeline running on Qdrant + Groq, querying Qasim's actual project documentation. Ask me anything technical about his work.",
-    },
-  ]);
+  const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showStarters, setShowStarters] = useState(true);
@@ -31,21 +28,54 @@ export default function ChatBot() {
   const inputRef = useRef(null);
 
   const chatWindowRef = useRef(null);
+  const sessionRef = useRef(null);
+  if (!sessionRef.current) sessionRef.current = new ChatSession();
+  const requestIdRef = useRef(0);
+  const pendingQuestionRef = useRef("");
+  const [error, setError] = useState("");
+
+  function closeChat() {
+    requestIdRef.current += 1;
+    if (sessionRef.current.active) {
+      sessionRef.current.cancel();
+      setInput(pendingQuestionRef.current);
+      setError("Request canceled. You can try again.");
+      setLoading(false);
+    }
+    setIsOpen(false);
+  }
+
+  function resetChat() {
+    requestIdRef.current += 1;
+    sessionRef.current.reset();
+    setMessages([GREETING]);
+    setInput("");
+    setError("");
+    setLoading(false);
+    setShowStarters(true);
+  }
+
+  useEffect(() => () => sessionRef.current.cancel(), []);
   useEffect(() => {
     function handleClickOutside(event) {
       if (
         chatWindowRef.current &&
         !chatWindowRef.current.contains(event.target)
       ) {
-        setIsOpen(false);
+        closeChat();
       }
+    }
+    function handleEscape(event) {
+      if (event.key === "Escape") closeChat();
     }
     // Only bind the listener if the chat is actually open
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen]);
   useEffect(() => {
@@ -67,53 +97,30 @@ export default function ChatBot() {
   }, [isOpen]);
 
   async function send(text) {
-    const userMsg = text || input.trim();
-    if (!userMsg || loading) return;
-    setInput("");
-    setShowStarters(false);
-    const newMessages = [...messages, { role: "user", content: userMsg }];
-    setMessages(newMessages);
-    setLoading(true);
-    inputRef.current?.focus();
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
-      });
-
-      // Guard: if Vercel returns a non-200 (404, 500, etc.), it's likely HTML, not JSON.
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`API Error ${res.status}:`, errorText);
-        throw new Error(`Server returned ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      if (data.error) throw new Error(data.error);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.reply,
-          sources: data.sources,
-        },
-      ]);
-    } catch (err) {
-      console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "I'm having trouble connecting to my knowledge base right now. Please ensure the API keys are correctly configured.",
-        },
-      ]);
+    const userMsg = (text || input).trim();
+    if (!userMsg || sessionRef.current.active) return;
+    if (userMsg.length > MAX_INPUT_LENGTH) {
+      setError(`Enter a question of at most ${MAX_INPUT_LENGTH} characters.`);
+      return;
     }
-    setLoading(false);
+    const requestId = ++requestIdRef.current;
+    pendingQuestionRef.current = userMsg;
+    setInput("");
+    setError("");
+    setShowStarters(false);
+    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    setLoading(true);
+    try {
+      const data = await sessionRef.current.send(userMsg);
+      if (requestId !== requestIdRef.current) return;
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply, sources: data.sources }]);
+    } catch (err) {
+      if (requestId !== requestIdRef.current) return;
+      setError(err.message);
+      setInput(userMsg);
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false);
+    }
   }
 
   return (
@@ -181,6 +188,7 @@ export default function ChatBot() {
                     . Ask me how Qasim's architecture works.
                   </p>
                   <button
+                    aria-label="Dismiss chat hint"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowTooltip(false);
@@ -230,6 +238,8 @@ export default function ChatBot() {
           <motion.div
             ref={chatWindowRef}
             className="chat-container"
+            role="region"
+            aria-label="Portfolio chat"
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
@@ -264,8 +274,11 @@ export default function ChatBot() {
                   <div className="chat-meta">Qdrant · Groq · Qwen3</div>
                 </div>
               </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <button className="chat-reset" onClick={resetChat}>New chat</button>
               <button
-                onClick={() => setIsOpen(false)}
+                aria-label="Close chat"
+                onClick={closeChat}
                 style={{
                   background: "none",
                   border: "none",
@@ -275,9 +288,10 @@ export default function ChatBot() {
               >
                 <X size={20} />
               </button>
+              </div>
             </div>
 
-            <div className="chat-messages">
+            <div className="chat-messages" role="log" aria-live="polite" aria-relevant="additions" aria-busy={loading}>
               {messages.map((m, i) => (
                 <div
                   key={i}
@@ -354,7 +368,7 @@ export default function ChatBot() {
                   >
                     <Bot size={16} />
                   </div>
-                  <div className="bubble typing">
+                  <div className="bubble typing" role="status" aria-label="Generating response">
                     <span />
                     <span />
                     <span />
@@ -374,16 +388,20 @@ export default function ChatBot() {
               </div>
             )}
 
+            {error && <div className="chat-error" role="alert">{error}</div>}
             <div className="chat-input">
               <input
+                aria-label="Question about Qasim's projects"
+                maxLength={MAX_INPUT_LENGTH}
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
+                onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && send()}
                 placeholder="Ask about my AI projects..."
                 disabled={loading}
               />
               <button
+                aria-label="Send message"
                 onClick={() => send()}
                 disabled={loading || !input.trim()}
                 style={{

@@ -1,14 +1,18 @@
 [project]
 name = "web"
 version = "0.1.0"
-description = "Add your description here"
+description = "Qasim Tahir portfolio and retrieval chat API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.136.1",
     "groq>=1.2.0",
-    "langchain-text-splitters>=1.1.2",
     "python-dotenv>=1.2.2",
     "qdrant-client>=1.18.0",
+]
+
+[dependency-groups]
+dev = [
+    "fastapi>=0.136.1",
+    "langchain-text-splitters>=1.1.2",
     "uvicorn>=0.47.0",
 ]

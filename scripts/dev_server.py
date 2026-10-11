@@ -1,4 +1,7 @@
 from fastapi import FastAPI, Request, Response
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import Headers
+from starlette.requests import ClientDisconnect
 import sys, os
 import io
 from dotenv import load_dotenv
@@ -16,7 +19,7 @@ app = FastAPI()
 # The CORS logic is now handled entirely by the 'api.chat.handler' 
 # to ensure local and production behaviors are identical.
 
-from api.chat import handler
+from api.chat import handler, MAX_BODY_SIZE, RequestError, content_length
 
 class MockWfile:
     def __init__(self):
@@ -49,9 +52,29 @@ class FastApiBridge(handler):
 
 @app.post("/api/chat")
 async def chat(request: Request):
-    body = await request.body()
-    bridge = FastApiBridge(request, body)
-    bridge.do_POST()
+    bridge = FastApiBridge(request, b"")
+    try:
+        # Reject the declared size first, then limit actual streamed bytes.
+        # Missing lengths are valid for ASGI streams; the bridge receives the
+        # measured length after buffering at most MAX_BODY_SIZE bytes.
+        declared = content_length(request.headers, required=False)
+        body = bytearray()
+        async for chunk in request.stream():
+            if len(body) + len(chunk) > MAX_BODY_SIZE:
+                raise RequestError(413, "Request body exceeds 32 KB")
+            body.extend(chunk)
+        if declared is not None and declared != len(body):
+            raise RequestError(400, "Incomplete request body")
+        bridge.rfile = io.BytesIO(body)
+        headers = dict(request.headers)
+        headers["content-length"] = str(len(body))
+        headers.pop("transfer-encoding", None)
+        bridge.headers = Headers(headers)
+        await run_in_threadpool(bridge.do_POST)
+    except RequestError as error:
+        bridge._send_error(error.status, str(error))
+    except ClientDisconnect:
+        bridge._send_error(400, "Incomplete request body")
     
     return Response(
         content=bridge.wfile.getvalue(),
