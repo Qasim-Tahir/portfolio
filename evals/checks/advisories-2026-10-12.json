@@ -1,0 +1,44 @@
+{
+  "checked_at": "2026-10-11T23:35:20.819788+00:00",
+  "scope": "Registry advisory database snapshot; not proof of absence of vulnerabilities.",
+  "checks": {
+    "npm-full": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependency_count": 261,
+      "input_file": "package-lock.json",
+      "input_sha256": "24837b57319e4c62c908db769b54cfa51bbb4fe10bc8cb5fc2c5b334001527ea"
+    },
+    "npm-production": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependency_count": 261,
+      "input_file": "package-lock.json",
+      "input_sha256": "24837b57319e4c62c908db769b54cfa51bbb4fe10bc8cb5fc2c5b334001527ea"
+    },
+    "python-runtime": {
+      "advisories": 0,
+      "audited_packages": 24,
+      "input_file": "requirements.txt",
+      "input_sha256": "8d5c899ac849fbf088fc111ba25e2919b2abf391e3458e0bb4bf163d062c1518"
+    },
+    "python-development": {
+      "advisories": 0,
+      "audited_packages": 51,
+      "input_file": "requirements-dev.txt",
+      "input_sha256": "c1db2545d3adf7403f8e0f1fd3c88610856024c420d07489a55bab0c2cfcc94b"
+    }
+  }
+}

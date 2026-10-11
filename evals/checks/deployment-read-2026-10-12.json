@@ -1,0 +1,63 @@
+{
+  "mode": "read_only",
+  "checked_at": "2026-10-11T23:17:24.246941+00:00",
+  "qdrant": {
+    "collection": "portfolio",
+    "aliases": [],
+    "vectors": {
+      "content_vector": {
+        "size": 384,
+        "distance": "Cosine"
+      }
+    },
+    "point_count": 219,
+    "sample_count": 219,
+    "has_more": false,
+    "sources": [
+      "about",
+      "cognisynth",
+      "cognisynth-technical",
+      "invoice-automation",
+      "islamic-source-finder",
+      "islamic-source-finder-technical",
+      "ocr-summarizer",
+      "ocr-summarizer-technical",
+      "portfolio-rag",
+      "portfolio-rag-technical"
+    ],
+    "versioned_points": 0,
+    "model_metadata_points": 0
+  },
+  "deployment": {
+    "GET /": {
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "elapsed_seconds": 1.209,
+      "json_error": false
+    },
+    "OPTIONS /api/chat": {
+      "status": 200,
+      "content_type": null,
+      "elapsed_seconds": 2.714,
+      "json_error": false
+    },
+    "POST /api/chat": {
+      "status": 400,
+      "content_type": "application/json",
+      "elapsed_seconds": 0.753,
+      "json_error": true
+    },
+    "GET /favicon.svg": {
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "elapsed_seconds": 0.735,
+      "json_error": false
+    },
+    "GET /social-preview.png": {
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "elapsed_seconds": 0.164,
+      "json_error": false
+    }
+  }
+}

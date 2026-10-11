@@ -40,7 +40,7 @@ Subsequent refreshes print the previous collection and a rollback command:
 uv run --frozen python scripts/ingest.py --alias portfolio-live --rollback-to PREVIOUS_COLLECTION
 ```
 
-`check_qdrant.py` checks the exact count, the 384-dimensional cosine `content_vector`, the alias target, and embedding metadata from a sampled point. Legacy collections without embedding metadata are reported as unknown. The smoke check proves retrieval availability, not answer quality. Live corpus/model verification and a RAG evaluation set are separate backlog tasks.
+`check_qdrant.py` checks the exact count, the 384-dimensional cosine `content_vector`, the alias target, and embedding metadata from a sampled point. Legacy collections without embedding metadata are reported as unknown. The smoke check proves retrieval availability, not answer quality. The versioned evaluation runner is described below; corpus upload and live evaluation require explicit authorization for the prepared payload and providers.
 
 ## Chat contract and limits
 
@@ -48,7 +48,7 @@ Send an object with `messages`, containing complete alternating user/assistant t
 
 A successful response contains `reply`, a string array `sources`, and an optional `citations` array. New grounded answers return citations with `label`, `chunk_id`, `source`, `project`, `section`, `subsection`, `document_version`, `score`, and `excerpt`. The visible [S1] labels match expandable source passages. Quotes are plain text, not executable HTML. Only selected sources are listed, in retrieval order. Legacy replies remain readable with a label explaining that passages are unavailable. Policy refusals return 200 with no sources. Invalid requests return 400 or 415; oversized bodies return 413; rate exhaustion returns 429 with `Retry-After`; provider failures return 503; timeouts return 504. CORS controls browser access to responses and is not API authentication.
 
-Vercel is configured with a 28-second platform maximum for `api/chat.py` ([duration configuration](https://vercel.com/docs/functions/configuring-functions/duration)). The provider pipeline checks a 24-second budget between stages, with an eight-second timeout per provider call and no Groq retries. SDK timeouts apply to network phases; enforcing a hard deadline for an in-flight server operation remains FYP-82. The browser has a 30-second deadline and cancels on close, reset, or unmount. Browser cancellation does not guarantee termination of a request already running on the server. The local adapter runs synchronous providers in a worker thread and bounds streamed data before buffering.
+Vercel is configured with a 28-second platform maximum for `api/chat.py` ([duration configuration](https://vercel.com/docs/functions/configuring-functions/duration)). The async request pipeline uses a cancellable 24-second wall-clock budget around quota acquisition, classification, retrieval and generation. Eight-second provider network timeouts and zero Groq retries supplement that budget. Request clients belong to one event loop and close on cancellation, with a separate one-second cleanup bound. Slow socket body reads check the same deadline between underlying reads; the local ASGI adapter includes streamed buffering in its budget and awaits the pipeline directly. Tests cancel stalled calls at every provider stage and during quota acquisition. Browser requests have a 30-second deadline and cancel on close, reset, or unmount. Browser abort does not guarantee that a remote provider stops computing. The deployed platform cap still requires rollout verification. No streaming is implemented.
 
 The safeguard receives an explicit classification policy and must return a complete JSON verdict with an integer `violation` of 0 or 1. All other verdicts fail closed with a service error. Deterministic injection and output checks are heuristics. Public architecture and stack names are allowed; credentials, private deployment endpoints, and internal instructions are confidential. Keep confidential material out of the corpus. Vercel requires the atomic shared limiter described below. Local development without shared-store credentials uses a process-only guard.
 
@@ -60,7 +60,7 @@ Each retrieved passage carries its project/section, stable point ID, document ha
 
 Empty retrieval returns a defined no-documentation answer without running generation. When retrieved passages do not answer the question, the generation schema requires an explicit unsupported verdict with no answer claims or citations; the server returns the same no-documentation answer. Safe greetings and thanks return predefined social replies without fabricated sources, after conversation classification. Policy refusals have no citations.
 
-These checks establish passage identity and quote provenance. They do **not** verify that the quoted text entails every answer claim, establish factual truth, or demonstrate live answer quality. Similarity is not answer confidence. Hosted answerability/abstention evaluation and any score-threshold calibration remain FYP-84/FYP-96. Measure a held-out set before adding hybrid retrieval or reranking. Offline regressions cover topic switches, ambiguous follow-ups, metadata, exact-quote validation, abstention, and UI contract failures. To opt into a single Groq schema smoke check using a public fixture, run `uv run --frozen python scripts/check_generation_contract.py --live --output /tmp/portfolio-contract-result.json`. Without `--live` the command skips the provider request. It never queries Qdrant, records only model/configuration, token counts when returned, status and error class, and excludes credentials, provider URLs, and exception bodies. This compatibility check is not an end-to-end retrieval or answer-quality evaluation.
+These checks establish passage identity and quote provenance. They do **not** verify that the quoted text entails every answer claim, establish factual truth, or demonstrate live answer quality. Similarity is not answer confidence. Provider-backed answerability/abstention evaluation and any score-threshold decision remain FYP-84/FYP-96 until an authorized live run completes. Measure a held-out set before adding hybrid retrieval or reranking. Offline regressions cover topic switches, ambiguous follow-ups, metadata, exact-quote validation, abstention, and UI contract failures. To opt into a single Groq schema smoke check using a public fixture, run `uv run --frozen python scripts/check_generation_contract.py --live --output /tmp/portfolio-contract-result.json`. Without `--live` the command skips the provider request. It never queries Qdrant, records only model/configuration, token counts when returned, status and error class, and excludes credentials, provider URLs, and exception bodies. This compatibility check is not an end-to-end retrieval or answer-quality evaluation.
 
 ## Portfolio links and sharing
 
@@ -90,7 +90,7 @@ uv run --frozen python -m unittest discover -s tests -v
 bash security_tests.sh
 ```
 
-The Python tests use mocked providers, isolate quota state, and assert status, response shape, refusal behavior, staging failures, and rollback. JavaScript tests cover at least 12 turns with an intervening failure, byte limits, errors, cancellation, timeout, and reset. No test command above calls paid providers or mutates a remote collection. Repeatable rendering and keyboard checks are documented in [tests/BROWSER_CHECKS.md](tests/BROWSER_CHECKS.md). The shell security entry point runs the deterministic API suite and exits nonzero on failure. These checks do not prove resistance to live model jailbreaks.
+The Python tests use mocked providers, isolate quota state, and assert status, response shape, refusal behavior, staging failures, and rollback. JavaScript tests cover at least 12 turns with an intervening failure, byte limits, errors, cancellation, timeout, and reset. No test command above calls providers or mutates a remote collection. Repeatable rendering and keyboard checks are documented in [tests/BROWSER_CHECKS.md](tests/BROWSER_CHECKS.md). The shell security entry point runs the deterministic API suite and exits nonzero on failure. These checks do not prove resistance to live model jailbreaks.
 
 GitHub Actions runs lint, JavaScript tests, build, and Python tests on pushes and pull requests. Live deployment checks and provider-backed security/quality evaluation remain separate from this offline suite.
 
@@ -101,3 +101,40 @@ uv lock
 uv export --frozen --no-dev --no-emit-project --no-hashes --output-file requirements.txt
 uv export --frozen --no-emit-project --no-hashes --output-file requirements-dev.txt
 ```
+
+
+## Canonical public content
+
+`content/portfolio.json` supplies project cards and work highlights directly to React. `scripts/sync_content.py` generates the matching indexed summaries, including the current TST role. Technical notes remain scoped descriptions. Run `python scripts/sync_content.py --check` before ingestion; CI rejects stale summaries. The default collection alias is `portfolio-live` in `server/config.py`, `.env.example`, examples and the illustrative terminal boot. Explicit environment overrides support migration from the legacy physical `portfolio` collection.
+
+`content/claims.json` classifies historical claims against supplied artifacts. Public numerical promises without reproducible evidence were removed, including unversioned comparator rankings, accuracy guarantees and employer counts. The original narratives remain in `reference/legacy-content/` for traceability and are excluded from ingestion/deployment. Missing evidence does not establish that those numbers were false. LuminaNotes' configured Scout model is verified at a named public source revision. Employer responsibilities retain their original attribution and are labeled owner-reported in the corpus.
+
+## Versioned evaluation
+
+`evals/v1/tuning.jsonl` has six tuning cases. `heldout.jsonl` has twenty separate cases for facts, follow-ups, unknown answers, unrelated requests, attacks and social replies. Keep held-out cases unchanged while tuning prompts or thresholds; make a new dataset version for later changes. No threshold or prompt change was selected from held-out results.
+
+```sh
+uv run --frozen python scripts/evaluate_rag.py --output /tmp/offline-eval.json
+# Explicitly authorize sending corpus passages to Groq before a live run.
+uv run --frozen python scripts/evaluate_rag.py --live --split tuning --limit 6 --output /tmp/tuning-eval.json
+uv run --frozen python scripts/evaluate_rag.py --live --output /tmp/heldout-eval.json
+```
+
+Offline mode exercises query construction against a lexical fixture; it does not report live model quality, latency or cost. Live mode uses the same async classification, retrieval, generation and citation-validation functions, sequentially with a delay. It compares last-message-only and contextual retrieval on follow-ups, measures passage recall, gold-text checks, abstention, false refusal and quote provenance, and stops at the first provider error by default. It skips HTTP/quota handling, which has separate asserted tests. Runtime/corpus/prompt/dataset hashes and SDK/model settings are recorded; endpoint URLs, credentials and provider exception bodies are omitted. Set `COLLECTION_NAME=portfolio-live` only after the replacement alias is verified.
+
+Live reports distinguish failed request duration from successful p50/p95 pipeline latency. The first observation and subsequent observations are reported separately; neither is described as a controlled provider or Vercel cold/warm benchmark. Cost uses a dated [Groq token-price snapshot](https://console.groq.com/docs/models), includes observed classifier/generator usage, and excludes storage, embeddings, Redis and hosting. It is an estimate, not a billing total; missing usage or failed calls mark the estimate incomplete. Both configured Groq models are currently listed as preview models, so access/lifecycle must be rechecked before rollout.
+
+Automatic gold-text checks do not establish semantic support. To report supported-answer and semantic citation accuracy, review every answered fact against its quoted evidence, then supply `--reviews` with labels tied to the exact original result-file SHA256. `--summarize` reads an existing report without any provider requests. Without complete review, semantic metrics remain null.
+
+## Tooling migration and advisory checks
+
+The supported tooling is Vite 8 and ESLint 10 on Node 24. ESLint uses `eslint.config.js`; JSX references are tracked by ESLint itself, replacing the legacy React scope plugin. The Hooks plugin remains enabled. Vite 8 uses Rolldown/Oxc and Lightning CSS; no application transform options needed migration. See the official [Vite migration guide](https://vite.dev/guide/migration) and [ESLint 10 release notes](https://eslint.org/blog/2026/02/eslint-v10.0.0-released/). Servers stay bound to localhost.
+
+```sh
+npm audit
+npm audit --omit=dev
+uv run --no-project --with pip-audit pip-audit -r requirements.txt
+uv run --no-project --with pip-audit pip-audit -r requirements-dev.txt
+```
+
+Keep runtime and development audit results separate. The October 2026 refresh updates advisory-affected Python transport packages and the local FastAPI/Starlette stack. UV constraints prevent affected HTTPX2 versions in optional tooling; the compatible lock currently uses LangSmith's HTTPX-based branch. Audit evidence is in `evals/checks/`; a clean audit is a database snapshot, not proof that dependencies are vulnerability-free.

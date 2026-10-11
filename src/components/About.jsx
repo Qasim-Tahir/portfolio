@@ -1,3 +1,4 @@
+import portfolio from "../../content/portfolio.json";
 import { motion } from "framer-motion";
 
 export default function About() {
@@ -50,7 +51,7 @@ export default function About() {
                   lineHeight: 1.4,
                 }}
               >
-                I am Qasim Tahir, a Junior AI Engineer at The Services Tree,
+                I am {portfolio.profile.name}, a {portfolio.profile.role} at {portfolio.profile.employer},
                 building production <span className="accent">RAG</span> and{" "}
                 <span className="accent">LLM</span> systems while finishing my
                 Data Science degree at FAST-NUCES.
@@ -159,7 +160,7 @@ export default function About() {
                     color: "var(--fg)",
                   }}
                 >
-                  Jr. AI Engineer
+                  {portfolio.profile.role}
                 </div>
                 <div
                   className="dim"
@@ -170,7 +171,7 @@ export default function About() {
                     fontWeight: 600,
                   }}
                 >
-                  The Services Tree
+                  {portfolio.profile.employer}
                 </div>
               </div>
             </div>

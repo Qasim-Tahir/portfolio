@@ -1,3 +1,4 @@
+import portfolio from "../../content/portfolio.json";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -20,33 +21,8 @@ const WORKFLOW_STEPS = [
   { label: "Production Deploy", icon: <Rocket size={18} /> },
 ];
 
-const HIGHLIGHTS = [
-  {
-    title: "AI-Powered Internal ERP",
-    desc: "Own the translation of stakeholder requirements into engineering specs, and direct AI-assisted development end-to-end with Claude Code — architecture, implementation review, debugging, security validation, and production deployment. Resolved 115+ tickets as the primary technical owner.",
-    icon: <FileCode2 size={20} />,
-  },
-  {
-    title: "Automated AI Screening Voice Agent",
-    desc: "Built an AI-driven voice agent that conducts and screens candidate interviews automatically, cutting down manual first-pass screening effort.",
-    icon: <Mic size={20} />,
-  },
-  {
-    title: "Company Second Brain",
-    desc: "Contributed to an org-wide knowledge ingestion and triage pipeline pulling from email, calendar, meetings, and messaging into a review inbox, with LLM-based triage surfacing what matters.",
-    icon: <BrainCircuit size={20} />,
-  },
-  {
-    title: "KPI Dashboard Data Integrity",
-    desc: "Diagnosed and fixed a silent SQL aggregation bug in a company-wide KPI/analytics dashboard that was dropping ~95% of records in one metric.",
-    icon: <BarChart3 size={20} />,
-  },
-  {
-    title: "AI Pipeline Reliability",
-    desc: "Fixed production AI reliability issues in the KPI pipeline, including a broken model-fallback path that silently failed assessments when API credits ran out, and non-deterministic scoring that produced inconsistent results from identical inputs.",
-    icon: <Activity size={20} />,
-  },
-];
+const HIGHLIGHT_ICONS = [<FileCode2 size={20} />, <Mic size={20} />, <BrainCircuit size={20} />, <BarChart3 size={20} />, <Activity size={20} />];
+const HIGHLIGHTS = portfolio.profile.highlights.map((item, index) => ({ ...item, icon: HIGHLIGHT_ICONS[index] }));
 
 export default function Experience() {
   return (
@@ -68,9 +44,8 @@ export default function Experience() {
             maxWidth: "650px",
           }}
         >
-          As a Junior AI Engineer at The Services Tree, I sit between
-          stakeholders and the codebase — turning requirements into shipped,
-          secure AI systems.
+          As a {portfolio.profile.role} at {portfolio.profile.employer}, I sit between
+          stakeholders and the codebase, turning requirements into AI systems.
         </p>
       </motion.div>
 

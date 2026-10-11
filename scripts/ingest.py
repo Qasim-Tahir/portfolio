@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from server.evidence import SOURCE_PROJECTS
+from server.config import collection_name
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 80
 
@@ -115,7 +116,7 @@ def rollback(client, alias, target):
 def main():
     load_dotenv(ROOT / '.env.local')
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--alias', default=os.getenv('COLLECTION_NAME', 'portfolio'))
+    parser.add_argument('--alias', default=collection_name())
     parser.add_argument('--docs', type=Path, default=ROOT / 'docs')
     parser.add_argument('--rollback-to', help='Retained physical collection to reactivate')
     args = parser.parse_args()

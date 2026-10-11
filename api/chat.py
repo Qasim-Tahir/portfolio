@@ -4,26 +4,25 @@ import json
 import logging
 import threading
 import time
+import asyncio
+from contextlib import asynccontextmanager
 import re
 import unicodedata
 from http.server import BaseHTTPRequestHandler
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Document
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from httpx import TimeoutException
 from server.prompts import SYSTEM_PROMPT, SAFEGUARD_POLICY, GENERATION_MODEL, SAFEGUARD_MODEL
 from server.evidence import strict_json, retrieval_query, evidence_record, generation_format, validated_answer, NO_EVIDENCE
-from server.rate_limit import SharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
-from groq import Groq, APITimeoutError, APIConnectionError, APIStatusError
+from server.rate_limit import AsyncSharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
+from groq import AsyncGroq, APITimeoutError, APIConnectionError, APIStatusError
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env.local'))
 
-# Global clients to reuse connections
-qdrant = None
-groq_client = None
 
-EMBED_MODEL = "sentence-transformers/all-minilm-l6-v2"
+from server.config import EMBED_MODEL, collection_name
 ALLOWED_ORIGIN = os.environ.get("FRONTEND_URL")
 if not ALLOWED_ORIGIN:
     raise RuntimeError("FRONTEND_URL environment variable must be set")
@@ -130,28 +129,27 @@ def sanitize_reply(reply: str) -> tuple[bool, str]:
 request_history = {}
 rate_lock = threading.Lock()
 
-def get_clients():
-    global qdrant, groq_client
-    
+@asynccontextmanager
+async def get_clients():
+    """Clients belong to one request/event loop and close on cancellation."""
     q_url = os.environ.get("QDRANT_URL")
-    q_key = os.environ.get("QDRANT_API_KEY")
     g_key = os.environ.get("GROQ_API_KEY")
-
-    if not g_key:
+    if not g_key or not q_url:
         raise UpstreamUnavailable("Chat is not configured")
-    if not q_url:
-        raise UpstreamUnavailable("Retrieval is not configured")
-
-    if qdrant is None:
-        qdrant = QdrantClient(
-            url=q_url, 
-            api_key=q_key, 
-            cloud_inference=True,
-            timeout=PROVIDER_TIMEOUT
-        )
-    if groq_client is None:
-        groq_client = Groq(api_key=g_key, timeout=PROVIDER_TIMEOUT, max_retries=0)
-    return qdrant, groq_client
+    q = AsyncQdrantClient(url=q_url, api_key=os.environ.get("QDRANT_API_KEY"),
+                          cloud_inference=True, timeout=PROVIDER_TIMEOUT)
+    client = AsyncGroq(api_key=g_key, timeout=PROVIDER_TIMEOUT, max_retries=0)
+    try:
+        yield q, client
+    finally:
+        # Cleanup has its own one-second cap, below the 28-second platform cap.
+        try:
+            async with asyncio.timeout(1):
+                results = await asyncio.gather(q.close(), client.close(), return_exceptions=True)
+                if any(isinstance(result, BaseException) for result in results):
+                    logging.warning("Chat client cleanup failed")
+        except Exception:
+            logging.warning("Chat client cleanup failed")
 
 class RequestError(Exception):
     def __init__(self, status, message):
@@ -211,16 +209,34 @@ def remaining_timeout(deadline):
     return min(PROVIDER_TIMEOUT, remaining)
 
 
+def read_body(stream, length, deadline, connection=None):
+    chunks = bytearray()
+    while len(chunks) < length:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("Request body deadline exceeded")
+        if connection is not None:
+            connection.settimeout(remaining)
+        # BufferedReader.read1 performs at most one underlying read. Checking
+        # the deadline between reads also bounds a slowly trickled body.
+        read = getattr(stream, 'read1', stream.read)
+        chunk = read(length - len(chunks))
+        if not chunk:
+            break
+        chunks.extend(chunk)
+    return bytes(chunks)
 
 
-def retrieve(query: str, timeout=PROVIDER_TIMEOUT):
-    q, _ = get_clients()
+
+
+async def retrieve(query: str, timeout=PROVIDER_TIMEOUT, *, client):
+    q = client
     try:
-        results = q.query_points(
-            collection_name=os.environ.get("COLLECTION_NAME", "portfolio"),
+        results = (await q.query_points(
+            collection_name=collection_name(),
             query=Document(text=query, model=EMBED_MODEL),
             using="content_vector", limit=5, with_payload=True, timeout=max(1, int(timeout))
-        ).points
+        )).points
     except ResponseHandlingException as error:
         if isinstance(error.source, (TimeoutError, TimeoutException)):
             raise TimeoutError("Retrieval timed out") from error
@@ -241,14 +257,16 @@ def retrieve(query: str, timeout=PROVIDER_TIMEOUT):
     return records
 
 
-def is_safe(messages, client) -> bool:
+async def is_safe(messages, client, observer=None) -> bool:
     """Only an explicit complete safe verdict permits generation."""
-    result = client.chat.completions.create(
+    result = await client.chat.completions.create(
         model=SAFEGUARD_MODEL,
         messages=[{"role": "system", "content": SAFEGUARD_POLICY},
                   {"role": "user", "content": json.dumps(messages, ensure_ascii=False)}],
         temperature=0, max_completion_tokens=1024, stream=False
     )
+    if observer:
+        observer('safeguard', result)
     try:
         choice = result.choices[0]
         if choice.finish_reason != "stop" or getattr(choice.message, "refusal", None):
@@ -273,6 +291,41 @@ SOCIAL_REPLIES = {
 }
 
 
+async def answer(messages, q, client, deadline, observer=None):
+    safety_client = client.with_options(timeout=remaining_timeout(deadline), max_retries=0)
+    if not await (is_safe(messages, safety_client, observer) if observer else is_safe(messages, safety_client)):
+        return {"reply": REFUSAL, "sources": []}
+    social = SOCIAL_REPLIES.get(messages[-1]['content'].strip().casefold().rstrip('.!?'))
+    if social:
+        return {"reply": social, "sources": [], "citations": []}
+    records = await retrieve(retrieval_query(messages), remaining_timeout(deadline), client=q)
+    if observer:
+        observer('retrieval', records)
+    if not records:
+        return {"reply": NO_EVIDENCE, "sources": [], "citations": []}
+    response = await client.with_options(timeout=remaining_timeout(deadline), max_retries=0).chat.completions.create(
+        model=GENERATION_MODEL,
+        messages=[{"role": "system", "content": SYSTEM_PROMPT.format(context=json.dumps(records, ensure_ascii=False))}, *messages],
+        response_format=generation_format(), max_completion_tokens=1024, temperature=0.3
+    )
+    if observer:
+        observer('generation', response)
+    remaining_timeout(deadline)
+    try:
+        choice = response.choices[0]
+        if choice.finish_reason != "stop" or getattr(choice.message, "refusal", None):
+            raise ValueError("Incomplete generation")
+        result = validated_answer(strict_json(choice.message.content), records)
+    except (ValueError, AttributeError, IndexError, TypeError) as error:
+        raise UpstreamUnavailable("Invalid generation response") from error
+    is_clean, reply = sanitize_reply(result['reply'])
+    if not is_clean or any(contains_private_value(citation['excerpt']) for citation in result['citations']):
+        result = {"reply": REFUSAL, "sources": [], "citations": []}
+    else:
+        result['reply'] = reply
+    return result
+
+
 class handler(BaseHTTPRequestHandler):
     def _send_json(self, code, payload):
         self.send_response(code)
@@ -287,75 +340,50 @@ class handler(BaseHTTPRequestHandler):
         self._send_json(code, {"error": message})
 
     def do_POST(self):
-        deadline = time.monotonic() + REQUEST_BUDGET
+        asyncio.run(self.handle_post())
+
+    async def handle_post(self, deadline=None):
+        deadline = deadline if deadline is not None else time.monotonic() + REQUEST_BUDGET
         limiter, lease_id = None, None
         try:
-            if self.path != '/api/chat':
-                raise RequestError(404, "Not found")
-            if self.headers.get("Content-Type", "").split(';', 1)[0].strip().lower() != "application/json":
-                raise RequestError(415, "Content-Type must be application/json")
-            if self.headers.get("Transfer-Encoding"):
-                raise RequestError(400, "Transfer-Encoding is not supported")
-            length = content_length(self.headers)
-            raw = self.rfile.read(length)
-            if len(raw) != length:
-                raise RequestError(400, "Incomplete request body")
-            try:
-                body = strict_json(raw.decode('utf-8'))
-            except (UnicodeDecodeError, ValueError, RecursionError) as error:
-                raise RequestError(400, "Invalid JSON") from error
-            messages = validate_messages(body)
+            async with asyncio.timeout(max(0, deadline - time.monotonic())):
+                if self.path != '/api/chat':
+                    raise RequestError(404, "Not found")
+                if self.headers.get("Content-Type", "").split(';', 1)[0].strip().lower() != "application/json":
+                    raise RequestError(415, "Content-Type must be application/json")
+                if self.headers.get("Transfer-Encoding"):
+                    raise RequestError(400, "Transfer-Encoding is not supported")
+                length = content_length(self.headers)
+                raw = read_body(self.rfile, length, deadline, getattr(self, 'connection', None))
+                if len(raw) != length:
+                    raise RequestError(400, "Incomplete request body")
+                try:
+                    body = strict_json(raw.decode('utf-8'))
+                except (UnicodeDecodeError, ValueError, RecursionError) as error:
+                    raise RequestError(400, "Invalid JSON") from error
+                messages = validate_messages(body)
 
-            client_ip = client_identity(self.headers, self.client_address[0])
-            if uses_shared_store():
-                limiter = SharedLimiter(Settings.from_environment())
-                lease_id = limiter.acquire(client_ip, min(2, remaining_timeout(deadline)))
-            else:
-                # Explicit development-only fallback. Production requires the
-                # shared store and returns 503 if it is missing or unavailable.
-                now = time.monotonic()
-                with rate_lock:
-                    expired = [ip for ip, hits in request_history.items() if not hits or now - hits[-1] >= RATE_WINDOW]
-                    for ip in expired:
-                        del request_history[ip]
-                    hits = [t for t in request_history.get(client_ip, []) if now - t < RATE_WINDOW]
-                    if len(hits) >= RATE_LIMIT:
-                        raise RequestError(429, "Too many requests. Please wait a minute.")
-                    request_history[client_ip] = [*hits, now]
-            if any(is_injection_attempt(m['content']) or contains_private_value(m['content']) for m in messages):
-                self._send_json(200, {"reply": REFUSAL, "sources": []})
-                return
-            _, client = get_clients()
-            safety_client = client.with_options(timeout=remaining_timeout(deadline), max_retries=0)
-            if not is_safe(messages, safety_client):
-                self._send_json(200, {"reply": REFUSAL, "sources": []})
-                return
-            social = SOCIAL_REPLIES.get(messages[-1]['content'].strip().casefold().rstrip('.!?'))
-            if social:
-                self._send_json(200, {"reply": social, "sources": [], "citations": []})
-                return
-            records = retrieve(retrieval_query(messages), remaining_timeout(deadline))
-            if not records:
-                self._send_json(200, {"reply": NO_EVIDENCE, "sources": [], "citations": []})
-                return
-            response = client.with_options(timeout=remaining_timeout(deadline), max_retries=0).chat.completions.create(
-                model=GENERATION_MODEL,
-                messages=[{"role": "system", "content": SYSTEM_PROMPT.format(context=json.dumps(records, ensure_ascii=False))}, *messages],
-                response_format=generation_format(), max_completion_tokens=1024, temperature=0.3
-            )
-            remaining_timeout(deadline)
-            try:
-                choice = response.choices[0]
-                if choice.finish_reason != "stop" or getattr(choice.message, "refusal", None):
-                    raise ValueError("Incomplete generation")
-                result = validated_answer(strict_json(choice.message.content), records)
-            except (ValueError, AttributeError, IndexError, TypeError) as error:
-                raise UpstreamUnavailable("Invalid generation response") from error
-            is_clean, reply = sanitize_reply(result['reply'])
-            if not is_clean or any(contains_private_value(citation['excerpt']) for citation in result['citations']):
-                result = {"reply": REFUSAL, "sources": [], "citations": []}
-            else:
-                result['reply'] = reply
+                client_ip = client_identity(self.headers, self.client_address[0])
+                if uses_shared_store():
+                    limiter = AsyncSharedLimiter(Settings.from_environment())
+                    lease_id = await limiter.acquire(client_ip, min(2, remaining_timeout(deadline)))
+                else:
+                    # Explicit development-only fallback. Production requires the
+                    # shared store and returns 503 if it is missing or unavailable.
+                    now = time.monotonic()
+                    with rate_lock:
+                        expired = [ip for ip, hits in request_history.items() if not hits or now - hits[-1] >= RATE_WINDOW]
+                        for ip in expired:
+                            del request_history[ip]
+                        hits = [t for t in request_history.get(client_ip, []) if now - t < RATE_WINDOW]
+                        if len(hits) >= RATE_LIMIT:
+                            raise RequestError(429, "Too many requests. Please wait a minute.")
+                        request_history[client_ip] = [*hits, now]
+                if any(is_injection_attempt(m['content']) or contains_private_value(m['content']) for m in messages):
+                    self._send_json(200, {"reply": REFUSAL, "sources": []})
+                    return
+                async with get_clients() as (q, client):
+                    result = await answer(messages, q, client, deadline)
             self._send_json(200, result)
         except LimitExceeded as error:
             self.retry_after = error.retry_after
@@ -375,7 +403,7 @@ class handler(BaseHTTPRequestHandler):
                 remaining = deadline - time.monotonic()
                 if remaining > 0:
                     try:
-                        limiter.release(lease_id, min(2, remaining))
+                        await limiter.release(lease_id, min(1, remaining))
                     except LimitUnavailable:
                         # Lease expires even if the store is down or a worker dies.
                         logging.warning("Chat concurrency lease release failed")

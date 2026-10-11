@@ -1,14 +1,16 @@
 """Inspect the named-vector corpus without changing it."""
 import os
 from pathlib import Path
+import sys
 
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance
 
-EMBED_MODEL = "sentence-transformers/all-minilm-l6-v2"
-VECTOR_NAME = "content_vector"
-VECTOR_SIZE = 384
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from server.config import EMBED_MODEL, VECTOR_NAME, VECTOR_SIZE, collection_name
 
 
 def inspect_collection(client, collection, require_model=False):
@@ -39,7 +41,7 @@ def main():
     if not os.getenv('QDRANT_URL'):
         raise ValueError("Configure QDRANT_URL before inspecting the corpus")
     client = QdrantClient(url=os.environ['QDRANT_URL'], api_key=os.getenv('QDRANT_API_KEY'), timeout=8)
-    for key, value in inspect_collection(client, os.getenv('COLLECTION_NAME', 'portfolio')).items():
+    for key, value in inspect_collection(client, collection_name()).items():
         print(f"{key}: {value}")
 
 

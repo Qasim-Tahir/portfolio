@@ -1,5 +1,6 @@
 """Atomic sliding-window quotas and leased concurrency over Upstash Redis REST."""
 from dataclasses import dataclass
+import asyncio
 import hashlib
 import ipaddress
 import math
@@ -125,13 +126,15 @@ class SharedLimiter:
         except (httpx.HTTPError, ValueError, TypeError) as error:
             raise LimitUnavailable('Shared limiter unavailable') from error
 
-    def acquire(self, identity, timeout=2):
+    def acquisition(self, identity):
         digest = hashlib.sha256(identity.encode()).hexdigest()
         lease_id = uuid.uuid4().hex
         s = self.settings
-        result = self.command(['EVAL', ACQUIRE_SCRIPT, 3, self.prefix + 'ip:' + digest,
+        return lease_id, ['EVAL', ACQUIRE_SCRIPT, 3, self.prefix + 'ip:' + digest,
                                self.prefix + 'global', self.leases_key,
-                               s.window_ms, s.per_ip, s.global_limit, s.concurrency, s.lease_ms, lease_id], timeout)
+                               s.window_ms, s.per_ip, s.global_limit, s.concurrency, s.lease_ms, lease_id]
+
+    def verdict(self, result, lease_id):
         if (not isinstance(result, list) or len(result) != 2
                 or any(type(item) is not int for item in result)
                 or result[0] not in (0, 1) or result[1] < 0):
@@ -140,7 +143,36 @@ class SharedLimiter:
             raise LimitExceeded(max(1, math.ceil(result[1] / 1000)))
         return lease_id
 
+    def acquire(self, identity, timeout=2):
+        lease_id, command = self.acquisition(identity)
+        return self.verdict(self.command(command, timeout), lease_id)
+
     def release(self, lease_id, timeout=2):
         result = self.command(['ZREM', self.leases_key, lease_id], timeout)
+        if type(result) is not int or result not in (0, 1):
+            raise LimitUnavailable('Invalid lease release')
+
+
+class AsyncSharedLimiter(SharedLimiter):
+    async def command(self, values, timeout=2):
+        try:
+            async with asyncio.timeout(timeout):
+                async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+                    response = await client.post(self.settings.url, json=values,
+                        headers={'Authorization': 'Bearer ' + self.settings.token})
+                    response.raise_for_status()
+                    result = response.json()
+                    if not isinstance(result, dict) or 'error' in result or 'result' not in result:
+                        raise ValueError('Invalid limiter response')
+                    return result['result']
+        except (httpx.HTTPError, ValueError, TypeError, TimeoutError) as error:
+            raise LimitUnavailable('Shared limiter unavailable') from error
+
+    async def acquire(self, identity, timeout=2):
+        lease_id, command = self.acquisition(identity)
+        return self.verdict(await self.command(command, timeout), lease_id)
+
+    async def release(self, lease_id, timeout=2):
+        result = await self.command(['ZREM', self.leases_key, lease_id], timeout)
         if type(result) is not int or result not in (0, 1):
             raise LimitUnavailable('Invalid lease release')

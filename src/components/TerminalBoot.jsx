@@ -1,3 +1,4 @@
+import portfolio from "../../content/portfolio.json";
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -114,7 +115,7 @@ export default function TerminalBoot({ onComplete }) {
         <motion.div variants={reducedMotion ? undefined : typeLine}>
           &nbsp;&nbsp;&nbsp;&nbsp;vector_db=
           <span style={{ color: "#00e6ff" }}>Qdrant</span>(collection=
-          <span style={{ color: "#39ff14" }}>"portfolio-rag"</span>)
+          <span style={{ color: "#39ff14" }}>{`"${portfolio.collection_alias}"`}</span>)
         </motion.div>
 
         <motion.div variants={reducedMotion ? undefined : typeLine}>)</motion.div>

@@ -3,12 +3,12 @@ import json
 import os
 from types import SimpleNamespace as NS
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from server.evidence import evidence_record, retrieval_query, validated_answer, NO_EVIDENCE, MAX_QUERY_CHARS
 from api import chat
 import test_chat
-from test_chat import invoke, VALID, completion, answer_completion, RECORDS
+from test_chat import invoke, VALID, completion, answer_completion, RECORDS, clients_for
 
 
 def user(text): return {'role':'user','content':text}
@@ -133,8 +133,8 @@ class EvidenceAPITests(unittest.TestCase):
         self.retrieve.stop()
         self.clients.stop()
         q=MagicMock()
-        q.query_points.return_value=NS(points=[NS(id='x',score=.8,payload={'text':'Public project architecture.','source':'secret-store-token-0123456789'})])
-        with patch.object(chat,'get_clients',return_value=(q,self.client)), patch.object(chat,'uses_shared_store',return_value=False), patch.dict(os.environ,{'UPSTASH_REDIS_REST_TOKEN':'secret-store-token-0123456789'}):
+        q.query_points=AsyncMock(return_value=NS(points=[NS(id='x',score=.8,payload={'text':'Public project architecture.','source':'secret-store-token-0123456789'})]))
+        with patch.object(chat,'get_clients',side_effect=lambda: clients_for(q,self.client)), patch.object(chat,'uses_shared_store',return_value=False), patch.dict(os.environ,{'UPSTASH_REDIS_REST_TOKEN':'secret-store-token-0123456789'}):
             self.assertEqual(invoke(VALID)[0],503)
         self.assertEqual(self.client.chat.completions.create.call_count,1)
 

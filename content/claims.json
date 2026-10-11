@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-10-12",
+  "scope": "Missing artifacts do not prove a claim false. Verified means the named artifact supports the precise scoped claim.",
+  "claims": [
+    {
+      "id": "q1",
+      "category": "quantitative",
+      "original": "82.46% composite, outperforming or matching GPT/Gemini",
+      "status": "needs_evidence",
+      "reason": "Narrative only. Evaluation date, input set, sample size, scripts, raw results and exact comparator model versions are missing. Conflicting labels are archived without guessing versions.",
+      "public_action": "Removed numerical comparison from current public and indexed summaries.",
+      "evidence": [
+        "reference/legacy-content/cognisynth-technical.md"
+      ]
+    },
+    {
+      "id": "q2",
+      "category": "quantitative",
+      "original": "100% layout fidelity and 60% less note-taking time",
+      "status": "needs_evidence",
+      "reason": "No OCR gold set, pilot sample size, participant/task protocol or raw measurements provided.",
+      "public_action": "Removed numerical promises from indexed summaries.",
+      "evidence": []
+    },
+    {
+      "id": "q3",
+      "category": "quantitative",
+      "original": "Invoice processing under 30 seconds and 95%+ accuracy",
+      "status": "needs_evidence",
+      "reason": "No public code, test invoices, accuracy definition, sample size or timing artifact provided.",
+      "public_action": "Removed numbers from indexed summary.",
+      "evidence": []
+    },
+    {
+      "id": "q4",
+      "category": "quantitative",
+      "original": "115+ TST tickets and approximately 95% omitted KPI records",
+      "status": "needs_evidence",
+      "reason": "Employer work is owner-reported. No approved employer logs or source artifacts provided; retain ownership wording without numerical claims.",
+      "public_action": "Removed numbers from public copy; included scoped responsibilities in chatbot corpus.",
+      "evidence": [
+        "reference/legacy-content/about.md",
+        "git:f6ef7a3:src/components/Experience.jsx"
+      ]
+    },
+    {
+      "id": "v1",
+      "category": "testing_security",
+      "original": "Entity checking ensures 100% factual accuracy",
+      "status": "unverified",
+      "reason": "Entity membership alone cannot establish relationship, quantity or statement correctness. This is a logical overstatement of the described check.",
+      "public_action": "Describe entity checking and its limits precisely.",
+      "evidence": [
+        "reference/legacy-content/ocr-summarizer-technical.md"
+      ]
+    },
+    {
+      "id": "t1",
+      "category": "technology",
+      "original": "LuminaNotes uses Llama 4 Scout",
+      "status": "verified",
+      "reason": "The public Book_processor.py configures this model identifier. Provider availability and all project functionality were not tested.",
+      "public_action": "Use Llama 4 Scout consistently in current summaries.",
+      "evidence": [
+        "https://github.com/Qasim-Tahir/Lecture-Notes-Summarizer-OCR/blob/d6098da871beec35870ae14efeffaf6ddfdb6ed8/Book_processor.py"
+      ]
+    },
+    {
+      "id": "s1",
+      "category": "scale_production",
+      "original": "Sub-second answers and cold starts under two seconds",
+      "status": "needs_evidence",
+      "reason": "No successful live p50/p95 run with declared cold/warm conditions is available. Provider rejection timings are not answer latency.",
+      "public_action": "Remove absolute promises; record measured values only in evaluation reports.",
+      "evidence": []
+    },
+    {
+      "id": "s2",
+      "category": "testing_security",
+      "original": "Production-grade four-layer security prevents jailbreaks and billing exhaustion",
+      "status": "unverified",
+      "reason": "Specific filters, strict verdict parsing, atomic quotas and quote validation are implemented and regression-tested. They do not establish universal safety or cost bounds outside configured quotas.",
+      "public_action": "Name mechanisms and limitations instead of making a blanket guarantee.",
+      "evidence": [
+        "api/chat.py",
+        "server/rate_limit.py",
+        "server/evidence.py",
+        "tests/test_chat.py",
+        "tests/test_rate_limit.py"
+      ]
+    },
+    {
+      "id": "o1",
+      "category": "ownership",
+      "original": "Junior AI Engineer at TST and listed responsibilities",
+      "status": "needs_evidence",
+      "reason": "The owner previously published the role and responsibilities. No private employer artifacts requested or retrieved. Individual contributions retain their original built/contributed/fixed distinctions.",
+      "public_action": "Keep role and responsibilities, classify indexed descriptions as owner-reported.",
+      "evidence": [
+        "git:f6ef7a3:src/components/Experience.jsx",
+        "git:f6ef7a3:src/components/About.jsx"
+      ]
+    }
+  ]
+}

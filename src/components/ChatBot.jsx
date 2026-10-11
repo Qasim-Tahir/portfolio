@@ -32,7 +32,7 @@ export default function ChatBot({ openRequest = 0 }) {
 
   const chatWindowRef = useRef(null);
   const sessionRef = useRef(null);
-  if (!sessionRef.current) sessionRef.current = new ChatSession();
+  if (sessionRef.current === null) sessionRef.current = new ChatSession();
   const requestIdRef = useRef(0);
   const pendingQuestionRef = useRef("");
   const [error, setError] = useState("");
@@ -61,6 +61,9 @@ export default function ChatBot({ openRequest = 0 }) {
 
   useEffect(() => {
     if (!openRequest) return;
+    // An external project-card action opens this independently mounted panel.
+    // This effect intentionally synchronizes that action with local UI state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOpen(true);
     setShowTooltip(false);
   }, [openRequest]);
@@ -246,7 +249,12 @@ export default function ChatBot({ openRequest = 0 }) {
       </AnimatePresence>
 
       <AnimatePresence onExitComplete={() => {
-        if (restoreFocusRef.current) launcherRef.current?.focus();
+        // A visitor may navigate while the closing animation is running.
+        // Restore focus only if it has not moved to another control or section.
+        if (!isOpen && restoreFocusRef.current && (
+          document.activeElement === document.body ||
+          chatWindowRef.current?.contains(document.activeElement)
+        )) launcherRef.current?.focus();
         restoreFocusRef.current = false;
       }}>
         {isOpen && (

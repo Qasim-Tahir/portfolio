@@ -37,3 +37,7 @@ security_tests.sh
 tests/
 .github/
 requirements-dev.txt
+
+# Historical narratives and evaluation artifacts are not runtime inputs
+reference/
+evals/

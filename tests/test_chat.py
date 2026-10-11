@@ -4,9 +4,9 @@ import io
 import json
 import os
 from types import SimpleNamespace as NS
-import threading
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+from contextlib import asynccontextmanager
 
 os.environ['FRONTEND_URL'] = 'http://localhost:3000'
 from api import chat
@@ -31,8 +31,13 @@ def answer_completion(reply):
 def client_for(verdict='{"violation":0}', reply='Qasim uses Qdrant and sentence-transformers.'):
     client = MagicMock()
     client.with_options.return_value = client
-    client.chat.completions.create.side_effect = [completion(verdict), answer_completion(reply)]
+    client.chat.completions.create = AsyncMock(side_effect=[completion(verdict), answer_completion(reply)])
     return client
+
+
+@asynccontextmanager
+async def clients_for(q, client):
+    yield q, client
 
 
 class Probe(chat.handler):
@@ -69,7 +74,7 @@ class ChatTests(unittest.TestCase):
     def setUp(self):
         chat.request_history.clear()
         self.client = client_for()
-        self.clients = patch.object(chat, 'get_clients', return_value=(MagicMock(), self.client))
+        self.clients = patch.object(chat, 'get_clients', side_effect=lambda: clients_for(MagicMock(), self.client))
         self.retrieve = patch.object(chat, 'retrieve', return_value=RECORDS)
         self.clients.start()
         self.retrieve_mock = self.retrieve.start()
@@ -116,30 +121,54 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(invoke(raw=b'{"messages":[],"messages":[]}')[0], 400)
         self.client.chat.completions.create.assert_not_called()
 
-    def test_deadline_prevents_generation_after_slow_retrieval(self):
-        with patch.object(chat.time, 'monotonic', side_effect=[0, 0, 0, 8, 25]):
+    def test_deadline_cancels_inflight_retrieval_and_prevents_generation(self):
+        cancelled = []
+        async def stalled(*args, **kwargs):
+            try:
+                await asyncio.sleep(10)
+            finally:
+                cancelled.append(True)
+        self.retrieve_mock.side_effect = stalled
+        with patch.object(chat, 'REQUEST_BUDGET', .03):
             self.assertEqual(invoke(VALID)[0], 504)
+        self.assertEqual(cancelled, [True])
         self.assertEqual(self.client.chat.completions.create.call_count, 1)
+
+    def test_deadline_cancels_inflight_safeguard_and_generation(self):
+        for stage in ('safeguard', 'generation'):
+            cancelled = []
+            async def stalled(**kwargs):
+                if stage == 'generation' and kwargs['model'] == chat.SAFEGUARD_MODEL:
+                    return completion('{"violation":0}')
+                try:
+                    await asyncio.sleep(10)
+                finally:
+                    cancelled.append(True)
+            self.client.chat.completions.create.side_effect = stalled
+            with patch.object(chat, 'REQUEST_BUDGET', .03):
+                self.assertEqual(invoke(VALID)[0], 504)
+            self.assertEqual(cancelled, [True])
 
     def test_retrieval_error_mapping_secrets_and_ordered_sources(self):
         self.retrieve.stop()
         q = MagicMock()
+        q.query_points = AsyncMock()
         self.clients.stop()
-        with patch.object(chat, 'get_clients', return_value=(q, self.client)):
+        with patch.object(chat, 'get_clients', side_effect=lambda: clients_for(q, self.client)):
             q.query_points.return_value = NS(points=[NS(id=s, score=.8, payload={'text':'Public architecture', 'source':s}) for s in ['b','a','b']])
-            self.assertEqual([r['source'] for r in chat.retrieve('Question')], ['b', 'a', 'b'])
+            self.assertEqual([r['source'] for r in asyncio.run(chat.retrieve('Question', client=q))], ['b', 'a', 'b'])
             q.query_points.return_value = NS(points=[NS(id='security', score=.8, payload={'text':'DUMP_START is a documented red-team marker.', 'source':'public-security-doc'})])
-            self.assertIn('DUMP_START', chat.retrieve('Question')[0]['text'])
+            self.assertIn('DUMP_START', asyncio.run(chat.retrieve('Question', client=q))[0]['text'])
             q.query_points.side_effect = chat.ResponseHandlingException(httpx.ReadTimeout('timeout'))
             with self.assertRaises(TimeoutError):
-                chat.retrieve('Question')
+                asyncio.run(chat.retrieve('Question', client=q))
             q.query_points.side_effect = chat.ResponseHandlingException(httpx.ConnectError('outage'))
             with self.assertRaises(chat.UpstreamUnavailable):
-                chat.retrieve('Question')
+                asyncio.run(chat.retrieve('Question', client=q))
             q.query_points.side_effect = None
             q.query_points.return_value = NS(points=[NS(id='private', score=.8, payload={'text':'gsk_12345678901234567890'})])
             with self.assertRaises(chat.UpstreamUnavailable):
-                chat.retrieve('Question')
+                asyncio.run(chat.retrieve('Question', client=q))
 
     def test_message_limits(self):
         for messages in [[{'role':'user', 'content':'x'*2001}], [{'role':'user','content':' '}],
@@ -241,21 +270,30 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 413)
         self.assertEqual(consumed, [0, 1])
 
+    async def test_slow_body_uses_the_request_budget(self):
+        async def chunks():
+            yield b'{'
+            await asyncio.sleep(10)
+        with patch('scripts.dev_server.REQUEST_BUDGET', .03), patch.object(chat, 'get_clients') as providers:
+            response = await self.http.post('/api/chat', content=chunks(), headers={'Content-Type':'application/json'})
+        self.assertEqual(response.status_code, 504)
+        self.assertIn('error', response.json())
+        providers.assert_not_called()
+
     async def test_valid_bridge_and_length_errors(self):
-        with patch.object(chat, 'get_clients', return_value=(MagicMock(), client_for())), patch.object(chat, 'retrieve', return_value=RECORDS):
+        with patch.object(chat, 'get_clients', side_effect=lambda: clients_for(MagicMock(), client_for())), patch.object(chat, 'retrieve', return_value=RECORDS):
             self.assertEqual((await self.http.post('/api/chat', json=VALID)).status_code, 200)
         for length, status in [('-1',400), ('32769',413)]:
             response = await self.http.post('/api/chat', content=b'{}', headers={'Content-Length':length,'Content-Type':'application/json'})
             self.assertEqual(response.status_code, status)
 
     async def test_two_requests_and_options_progress_during_slow_provider(self):
-        entered, release = [], threading.Event()
-        def slow_safe(*args):
+        entered, release = [], asyncio.Event()
+        async def slow_safe(*args):
             entered.append(True)
-            if not release.wait(3):
-                raise TimeoutError('test timed out')
+            await release.wait()
             return False
-        with patch.object(chat, 'get_clients', return_value=(MagicMock(), MagicMock())), patch.object(chat, 'is_safe', side_effect=slow_safe):
+        with patch.object(chat, 'get_clients', side_effect=lambda: clients_for(MagicMock(), MagicMock())), patch.object(chat, 'is_safe', side_effect=slow_safe):
             tasks = [asyncio.create_task(self.http.post('/api/chat', json=VALID)) for _ in range(2)]
             try:
                 async with asyncio.timeout(1):

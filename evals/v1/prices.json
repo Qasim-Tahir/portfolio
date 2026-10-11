@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-10-12",
+  "source": "https://console.groq.com/docs/models",
+  "currency": "USD",
+  "scope": "Published token rates, not actual billing. Qdrant, Redis and hosting excluded.",
+  "models": {
+    "qwen/qwen3.8-27b": {"input_usd_per_million": 0.8, "output_usd_per_million": 4.0, "release_status": "preview"},
+    "openai/gpt-oss-safeguard-20b": {"input_usd_per_million": 0.075, "output_usd_per_million": 0.3, "release_status": "preview"}
+  }
+}

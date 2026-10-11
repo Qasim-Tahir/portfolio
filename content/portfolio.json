@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-10-12",
+  "collection_alias": "portfolio-live",
+  "profile": {
+    "name": "Qasim Tahir",
+    "role": "Junior AI Engineer",
+    "employer": "The Services Tree",
+    "education": "BS Data Science at FAST-NUCES",
+    "education_status": "Finishing the degree, as stated in the existing public profile; completion date is not independently verified.",
+    "overview": "Qasim Tahir is a Junior AI Engineer at The Services Tree, building RAG and LLM systems while finishing his Data Science degree at FAST-NUCES.",
+    "work_summary": "His work includes AI-assisted development of an internal ERP, AI interview screening, knowledge ingestion, and debugging data-integrity and model-fallback problems.",
+    "work_evidence_status": "owner_reported",
+    "highlights": [
+      {
+        "title": "AI-Powered Internal ERP",
+        "desc": "Translate stakeholder requirements into engineering specs and direct AI-assisted development with Claude Code, including architecture, implementation review, debugging, security checks, and deployment."
+      },
+      {
+        "title": "Automated AI Screening Voice Agent",
+        "desc": "Built an AI voice agent to conduct and screen candidate interviews automatically."
+      },
+      {
+        "title": "Company Second Brain",
+        "desc": "Contributed to a company knowledge ingestion pipeline for email, calendar, meetings, and messaging, with an inbox for review and LLM-based triage."
+      },
+      {
+        "title": "KPI Dashboard Data Integrity",
+        "desc": "Diagnosed and fixed a SQL aggregation bug that omitted records from a company KPI dashboard metric."
+      },
+      {
+        "title": "AI Pipeline Reliability",
+        "desc": "Fixed model-fallback handling when API credits ran out and investigated inconsistent scoring from identical inputs in the KPI pipeline."
+      }
+    ]
+  },
+  "projects": [
+    {
+      "source": "cognisynth",
+      "title": "CogniSynth",
+      "repo": null,
+      "desc": "GraphRAG pipeline for research papers, with a Neo4j knowledge graph, two-pass vision enrichment of figures, and claim checking.",
+      "tech": [
+        "Neo4j",
+        "GraphRAG",
+        "BGE-Reranker",
+        "Ragas",
+        "Three.js"
+      ],
+      "flow": [
+        "PDFs",
+        "VLM + NER",
+        "Graph DB"
+      ],
+      "details": [
+        "The owner describes PDF parsing with Docling, entity extraction with GLiNER and a Groq vision model, and canonical entity deduplication.",
+        "The described retrieval pipeline combines graph and text evidence, with BGE-M3 embeddings and BGE-Reranker-V2-M3.",
+        "The described answer checks compare extracted claims against retrieved text. They do not guarantee factual correctness."
+      ],
+      "evidence_status": "owner_reported"
+    },
+    {
+      "source": "ocr-summarizer",
+      "title": "LuminaNotes",
+      "repo": "https://github.com/Qasim-Tahir/Lecture-Notes-Summarizer-OCR",
+      "desc": "Vision-first OCR and academic summarization system. Processes PDFs, PPTX, and videos into Notion-ready study guides.",
+      "tech": [
+        "Llama 4 Scout",
+        "Whisper",
+        "Python"
+      ],
+      "flow": [
+        "Multi-modal",
+        "OCR Agent",
+        "Notion"
+      ],
+      "details": [
+        "Book_processor.py configures meta-llama/llama-4-scout-17b-16e-instruct for vision extraction and summarization.",
+        "The project converts slides to PDF with LibreOffice, extracts page images with Poppler, and transcribes video audio with Whisper.",
+        "Entity checks compare names and other extracted entities with OCR text. Entity presence does not validate relationships, quantities, omissions, or factual accuracy."
+      ],
+      "evidence_status": "model_verified_other_details_owner_reported"
+    },
+    {
+      "source": "invoice-automation",
+      "title": "Invoice Automation",
+      "repo": null,
+      "desc": "n8n workflow for structured data extraction from multi-format invoices using Vision-Language Models.",
+      "tech": [
+        "n8n",
+        "VLM",
+        "Python"
+      ],
+      "flow": [
+        "Email/Doc",
+        "n8n Flow",
+        "JSON"
+      ],
+      "details": [
+        "The owner describes an email-triggered n8n workflow, a FastAPI extraction service, and structured vendor, date, currency, total and line-item fields.",
+        "The described validation compares line-item amounts with invoice totals and routes validation failures for manual review.",
+        "No public implementation, accuracy dataset, processing-time measurement, or vendor privacy agreement is available in this repository."
+      ],
+      "evidence_status": "owner_reported"
+    },
+    {
+      "source": "islamic-source-finder",
+      "title": "Islamic Source Finder",
+      "repo": "https://github.com/Qasim-Tahir/IslamicSourceFinder",
+      "desc": "Multi-modal semantic retrieval system for religious texts, supporting text, image, audio, and video queries.",
+      "tech": [
+        "ChromaDB",
+        "OCR",
+        "Whisper"
+      ],
+      "flow": [
+        "Query",
+        "Embedding",
+        "Vector DB"
+      ],
+      "details": [
+        "The project describes text embeddings with sentence-transformers/all-MiniLM-L6-v2 and a ChromaDB vector store.",
+        "OCR and Whisper transcription turn image and audio/video queries into searchable text.",
+        "Retrieved passages help a visitor locate sources. Similarity does not establish authenticity, doctrinal correctness, or an authoritative religious judgment. No latency benchmark is published here."
+      ],
+      "evidence_status": "owner_reported"
+    },
+    {
+      "source": "portfolio-rag",
+      "title": "AI Portfolio Engine",
+      "repo": "https://github.com/Qasim-Tahir/portfolio",
+      "demo": "chat",
+      "desc": "This site's RAG chatbot: Qdrant and Groq over project documentation, with inspectable source passages. It validates requests and citation quotes, classifies conversations, and applies injection-pattern filters.",
+      "tech": [
+        "Qdrant",
+        "Groq",
+        "LangChain",
+        "Vercel"
+      ],
+      "flow": [
+        "Docs",
+        "RAG + Security",
+        "Chat UI"
+      ],
+      "details": [
+        "The embedding model is sentence-transformers/all-minilm-l6-v2. Qdrant stores 384-dimensional cosine vectors named content_vector.",
+        "The API retrieves up to five passages and retains project, section, chunk ID, document version and similarity score. Follow-up queries use bounded recent user context.",
+        "Groq generation uses qwen/qwen3.8-27b and classification uses openai/gpt-oss-safeguard-20b. Configured IDs do not prove account access.",
+        "Selected citations must reference retrieved labels and include a verbatim quote. Validation proves quote provenance, not semantic entailment.",
+        "The API has a 24-second cancellable request budget, eight-second provider timeouts and no Groq retries. Browser requests have a 30-second deadline.",
+        "Production requires an atomic shared Redis quota. Defaults are ten requests per IP per minute, sixty requests globally per minute, and eight concurrent leases. Missing store configuration returns 503.",
+        "Corpus refresh builds and verifies a replacement collection before switching the portfolio-live alias, retaining old collections for rollback."
+      ],
+      "evidence_status": "repository_code"
+    }
+  ],
+  "historical_benchmark": {
+    "status": "evidence_pending",
+    "evaluation_date": null,
+    "dataset_size": null,
+    "comparator_model_versions": null,
+    "note": "Old narrative labels conflict. No date, exact comparator versions, scripts, inputs or raw run artifacts were supplied. The historical narrative is archived outside the indexed corpus and is not a verified comparison."
+  }
+}

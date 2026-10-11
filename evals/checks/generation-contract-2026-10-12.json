@@ -1,0 +1,18 @@
+{
+  "kind": "public-fixture generation contract smoke",
+  "fixture_version": 1,
+  "checked_at": "2026-10-11T23:22:43.497473+00:00",
+  "provider_request_attempted": true,
+  "model": "qwen/qwen3.8-27b",
+  "groq_sdk_version": "1.2.0",
+  "fixture_sha256": "074ac10ed824ab563505f64d9ae629b8d6fa04d5019e737ce4b455e19ae3808f",
+  "max_completion_tokens": 1024,
+  "timeout_seconds": 8,
+  "max_retries": 0,
+  "finish_reason": "stop",
+  "status": "passed",
+  "citation_count": 1,
+  "input_tokens": 780,
+  "output_tokens": 66,
+  "elapsed_seconds": 0.628
+}
