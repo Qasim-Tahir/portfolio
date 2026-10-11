@@ -11,6 +11,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Document
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from httpx import TimeoutException
+from api.rate_limit import SharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
 from groq import Groq, APITimeoutError, APIConnectionError, APIStatusError
 
 # Load environment variables
@@ -106,7 +107,7 @@ def is_injection_attempt(query: str) -> bool:
 def contains_private_value(text: str) -> bool:
     # Actual deployment credentials are private. Public model names, stack
     # terms, project names, and public URLs are allowed.
-    for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL'):
+    for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL', 'UPSTASH_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_URL'):
         secret = os.environ.get(name, '')
         if len(secret) >= 8 and secret in text:
             return True
@@ -326,7 +327,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
         if code == 429:
-            self.send_header("Retry-After", str(RATE_WINDOW))
+            self.send_header("Retry-After", str(getattr(self, "retry_after", RATE_WINDOW)))
         self.end_headers()
         self.wfile.write(json.dumps(payload).encode())
 
@@ -335,6 +336,7 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         deadline = time.monotonic() + REQUEST_BUDGET
+        limiter, lease_id = None, None
         try:
             if self.path != '/api/chat':
                 raise RequestError(404, "Not found")
@@ -352,20 +354,22 @@ class handler(BaseHTTPRequestHandler):
                 raise RequestError(400, "Invalid JSON") from error
             messages = validate_messages(body)
 
-            # Local process guard only; shared serverless limiting is tracked
-            # separately. Trust forwarded IPs only on the Vercel ingress.
-            forwarded = self.headers.get('x-forwarded-for', '') if os.getenv('VERCEL') == '1' else ''
-            client_ip = forwarded.split(',')[0].strip() if forwarded else self.client_address[0]
-            now = time.monotonic()
-            with rate_lock:
-                expired = [ip for ip, hits in request_history.items() if not hits or now - hits[-1] >= RATE_WINDOW]
-                for ip in expired:
-                    del request_history[ip]
-                hits = [t for t in request_history.get(client_ip, []) if now - t < RATE_WINDOW]
-                if len(hits) >= RATE_LIMIT:
-                    raise RequestError(429, "Too many requests. Please wait a minute.")
-                request_history[client_ip] = [*hits, now]
-
+            client_ip = client_identity(self.headers, self.client_address[0])
+            if uses_shared_store():
+                limiter = SharedLimiter(Settings.from_environment())
+                lease_id = limiter.acquire(client_ip, min(2, remaining_timeout(deadline)))
+            else:
+                # Explicit development-only fallback. Production requires the
+                # shared store and returns 503 if it is missing or unavailable.
+                now = time.monotonic()
+                with rate_lock:
+                    expired = [ip for ip, hits in request_history.items() if not hits or now - hits[-1] >= RATE_WINDOW]
+                    for ip in expired:
+                        del request_history[ip]
+                    hits = [t for t in request_history.get(client_ip, []) if now - t < RATE_WINDOW]
+                    if len(hits) >= RATE_LIMIT:
+                        raise RequestError(429, "Too many requests. Please wait a minute.")
+                    request_history[client_ip] = [*hits, now]
             if any(is_injection_attempt(m['content']) for m in messages):
                 self._send_json(200, {"reply": REFUSAL, "sources": []})
                 return
@@ -387,16 +391,29 @@ class handler(BaseHTTPRequestHandler):
                 raise UpstreamUnavailable("Invalid generation response") from error
             is_clean, reply = sanitize_reply(generated)
             self._send_json(200, {"reply": reply, "sources": sources if is_clean else []})
+        except LimitExceeded as error:
+            self.retry_after = error.retry_after
+            self._send_error(429, "Too many requests. Please try again shortly.")
         except RequestError as error:
             self._send_error(error.status, str(error))
         except (TimeoutError, APITimeoutError):
             self._send_error(504, "The response took too long. Please try again.")
-        except (UpstreamUnavailable, APIConnectionError, APIStatusError):
+        except (UpstreamUnavailable, LimitUnavailable, APIConnectionError, APIStatusError):
             self._send_error(503, "The chat service is temporarily unavailable. Please try again.")
         except Exception:
             # Provider exceptions can include request bodies or credentials.
             logging.error("Chat request failed")
             self._send_error(500, "Something went wrong. Please try again.")
+        finally:
+            if limiter is not None and lease_id is not None:
+                remaining = deadline - time.monotonic()
+                if remaining > 0:
+                    try:
+                        limiter.release(lease_id, min(2, remaining))
+                    except LimitUnavailable:
+                        # Lease expires even if the store is down or a worker dies.
+                        logging.warning("Chat concurrency lease release failed")
+
 
     def do_OPTIONS(self):
         self.send_response(204)
