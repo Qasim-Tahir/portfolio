@@ -1,5 +1,6 @@
 """Local browser-test fixture. Never calls Groq or Qdrant."""
 import os
+import json
 from pathlib import Path
 import sys
 import time
@@ -27,14 +28,14 @@ class FakeClient:
                 raise chat.UpstreamUnavailable('Mock outage')
             if question == 'slow question':
                 time.sleep(4)
-            answer = 'Mock documented answer to ' + question
+            answer = json.dumps({'answer':'','supported':False,'evidence':[]}) if question == 'simulate unsupported' else json.dumps({'answer':'Mock documented answer to ' + question + ' [S1]', 'supported':True, 'evidence':[{'label':'S1','quote':'Public fixture documentation supports the mock answer.'}]})
         return NS(choices=[NS(finish_reason='stop', message=NS(content=answer, refusal=None))])
 
 
 def main():
     import uvicorn
     chat.get_clients = lambda: (None, FakeClient())
-    chat.retrieve = lambda query, timeout=8: ('Public fixture documentation.', ['test-project'])
+    chat.retrieve = lambda query, timeout=8: [{'label':'S1','chunk_id':'mock-chunk','source':'test-project','project':'Test project','section':'Architecture','subsection':'','document_version':'a'*64,'score':0.8,'text':'Public fixture documentation supports the mock answer.'}]
     # Isolate transcript regression from the separately tested 10/minute quota.
     chat.RATE_LIMIT = 100
     uvicorn.run(app, host='127.0.0.1', port=8000)

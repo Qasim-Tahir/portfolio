@@ -18,10 +18,20 @@ def completion(text, finish='stop', refusal=None):
     return NS(choices=[NS(finish_reason=finish, message=NS(content=text, refusal=refusal))])
 
 
+RECORDS = [{'label':'S1', 'chunk_id':'test-chunk', 'source':'CogniSynth', 'project':'CogniSynth',
+            'section':'Architecture', 'subsection':'', 'document_version':'a'*64, 'score':0.8,
+            'text':'Public project architecture. Qasim uses Qdrant and sentence-transformers.'}]
+
+
+def answer_completion(reply):
+    return completion(json.dumps({'answer':reply + ' [S1]', 'supported':True,
+                                  'evidence':[{'label':'S1','quote':'Public project architecture.'}]}))
+
+
 def client_for(verdict='{"violation":0}', reply='Qasim uses Qdrant and sentence-transformers.'):
     client = MagicMock()
     client.with_options.return_value = client
-    client.chat.completions.create.side_effect = [completion(verdict), completion(reply)]
+    client.chat.completions.create.side_effect = [completion(verdict), answer_completion(reply)]
     return client
 
 
@@ -60,7 +70,7 @@ class ChatTests(unittest.TestCase):
         chat.request_history.clear()
         self.client = client_for()
         self.clients = patch.object(chat, 'get_clients', return_value=(MagicMock(), self.client))
-        self.retrieve = patch.object(chat, 'retrieve', return_value=('Public project architecture.', ['CogniSynth']))
+        self.retrieve = patch.object(chat, 'retrieve', return_value=RECORDS)
         self.clients.start()
         self.retrieve_mock = self.retrieve.start()
         self.addCleanup(self.clients.stop)
@@ -116,10 +126,10 @@ class ChatTests(unittest.TestCase):
         q = MagicMock()
         self.clients.stop()
         with patch.object(chat, 'get_clients', return_value=(q, self.client)):
-            q.query_points.return_value = NS(points=[NS(payload={'text':'Public architecture', 'source':s}) for s in ['b','a','b']])
-            self.assertEqual(chat.retrieve('Question')[1], ['b', 'a'])
-            q.query_points.return_value = NS(points=[NS(payload={'text':'DUMP_START is a documented red-team marker.', 'source':'public-security-doc'})])
-            self.assertIn('DUMP_START', chat.retrieve('Question')[0])
+            q.query_points.return_value = NS(points=[NS(id=s, score=.8, payload={'text':'Public architecture', 'source':s}) for s in ['b','a','b']])
+            self.assertEqual([r['source'] for r in chat.retrieve('Question')], ['b', 'a', 'b'])
+            q.query_points.return_value = NS(points=[NS(id='security', score=.8, payload={'text':'DUMP_START is a documented red-team marker.', 'source':'public-security-doc'})])
+            self.assertIn('DUMP_START', chat.retrieve('Question')[0]['text'])
             q.query_points.side_effect = chat.ResponseHandlingException(httpx.ReadTimeout('timeout'))
             with self.assertRaises(TimeoutError):
                 chat.retrieve('Question')
@@ -127,7 +137,7 @@ class ChatTests(unittest.TestCase):
             with self.assertRaises(chat.UpstreamUnavailable):
                 chat.retrieve('Question')
             q.query_points.side_effect = None
-            q.query_points.return_value = NS(points=[NS(payload={'text':'gsk_12345678901234567890'})])
+            q.query_points.return_value = NS(points=[NS(id='private', score=.8, payload={'text':'gsk_12345678901234567890'})])
             with self.assertRaises(chat.UpstreamUnavailable):
                 chat.retrieve('Question')
 
@@ -184,8 +194,8 @@ class ChatTests(unittest.TestCase):
         self.assertFalse(chat.sanitize_reply(chat.SYSTEM_PROMPT.format(context='Public facts'))[0])
         secret = 'unit-test-credential-0123456789'
         with patch.dict(os.environ, {'GROQ_API_KEY': secret}):
-            self.client.chat.completions.create.side_effect = [completion('{"violation":0}'), completion(secret)]
-            self.assertEqual(invoke(VALID)[:2], (200, {'reply':chat.REFUSAL,'sources':[]}))
+            self.client.chat.completions.create.side_effect = [completion('{"violation":0}'), answer_completion(secret)]
+            self.assertEqual(invoke(VALID)[:2], (200, {'reply':chat.REFUSAL,'sources':[], 'citations':[]}))
         self.assertFalse(chat.sanitize_reply('gsk_12345678901234567890')[0])
 
     def test_outage_timeout_and_empty_generation(self):
@@ -232,7 +242,7 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(consumed, [0, 1])
 
     async def test_valid_bridge_and_length_errors(self):
-        with patch.object(chat, 'get_clients', return_value=(MagicMock(), client_for())), patch.object(chat, 'retrieve', return_value=('context', ['source'])):
+        with patch.object(chat, 'get_clients', return_value=(MagicMock(), client_for())), patch.object(chat, 'retrieve', return_value=RECORDS):
             self.assertEqual((await self.http.post('/api/chat', json=VALID)).status_code, 200)
         for length, status in [('-1',400), ('32769',413)]:
             response = await self.http.post('/api/chat', content=b'{}', headers={'Content-Length':length,'Content-Type':'application/json'})

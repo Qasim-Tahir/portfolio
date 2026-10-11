@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import os
+import sys
 from pathlib import Path
 import re
 import uuid
@@ -19,6 +20,10 @@ except ModuleNotFoundError:
     from check_qdrant import EMBED_MODEL, VECTOR_NAME, VECTOR_SIZE, inspect_collection
 
 ROOT = Path(__file__).resolve().parents[1]
+# Scripts can also be run directly from their directory.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from server.evidence import SOURCE_PROJECTS
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 80
 
@@ -36,7 +41,7 @@ def corpus_points(docs_dir):
             raise ValueError(f"Empty document: {file.name}")
         if re.search(r'(?:gsk_|sk-)[a-zA-Z0-9_-]{16,}', content):
             raise ValueError(f"Possible credential in document: {file.name}")
-        for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL'):
+        for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL', 'UPSTASH_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_URL'):
             secret = os.getenv(name, '')
             if len(secret) >= 8 and secret in content:
                 raise ValueError(f"Private configuration in document: {file.name}")
@@ -47,6 +52,7 @@ def corpus_points(docs_dir):
                 if len(chunk.strip()) < 50:
                     continue
                 payload = {"text": chunk, "source": file.stem,
+                           "project": SOURCE_PROJECTS.get(file.stem.removesuffix("-technical"), file.stem),
                            "section": section.metadata.get('section', ''),
                            "subsection": section.metadata.get('subsection', ''),
                            "document_hash": document_hash, "embedding_model": EMBED_MODEL}

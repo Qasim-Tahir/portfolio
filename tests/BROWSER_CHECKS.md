@@ -20,3 +20,11 @@ The automated tests cover malformed response schemas, rate-limit errors, deadlin
 5. Send a normal message and inspect the rendered user bubble: white text on rgb(37, 99, 235) measures 5.17:1. User links and emphasis inherit white; links are underlined. Confirm the surrounding palette is unchanged.
 6. Open a direct `/#skills` URL, let the mandatory boot finish, and confirm the section starts about 90px from the viewport top. Click Projects, go Back to Skills, and Forward to Projects; wait for normal smooth scrolling to finish before measuring. Headings must clear the fixed 70px navigation.
 7. Enable the browser's reduced-motion preference and repeat navigation and boot. Terminal text remains visible for the same mandatory boot interval; its reveal and blinking cursor, ambient CSS effects, smooth scrolling, and motion transforms are disabled. Normal animation remains unchanged when the preference is off.
+
+## Project evidence and share metadata
+
+1. Visit Projects. Verify the three public GitHub destinations and project-specific accessible names. CogniSynth and Invoice Automation show Code unavailable; the four external demos show Demo unavailable. No project evidence link has href="#".
+2. Click the AI Portfolio Engine Live Demo button and confirm it opens chat with the question input focused, including after the panel has been closed with Escape.
+3. Ask a normal fixture question. Its answer contains [S1]. Open the native citation details by keyboard with Enter/Space and verify the exact quoted passage, source, section, stable chunk ID, document version, and similarity score. Reset chat and confirm old passages disappear.
+4. At 320, 375, 600, 700, and desktop widths, confirm project actions wrap within the card and an expanded citation fits inside chat. Quotes render as text; source scores are not presented as answer confidence.
+5. Request /favicon.svg and /social-preview.png from the local preview and built output. Verify SVG and PNG content types, 1200×630 PNG dimensions, canonical URL, Open Graph and Twitter image/description metadata, and the editable source asset. The share card must not contain unsupported performance promises.
