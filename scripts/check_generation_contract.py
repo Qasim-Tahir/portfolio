@@ -53,8 +53,10 @@ def main():
                 result = validated_answer(strict_json(choice.message.content), [record])
                 if choice.finish_reason != 'stop' or not result['citations']:
                     raise ValueError('Incomplete or unsupported fixture answer')
+                usage = getattr(response, 'usage', None)
                 report.update({'status':'passed','citation_count':len(result['citations']),
-                               'input_tokens':response.usage.prompt_tokens,'output_tokens':response.usage.completion_tokens})
+                               'input_tokens':getattr(usage, 'prompt_tokens', None),
+                               'output_tokens':getattr(usage, 'completion_tokens', None)})
             except Exception as error:
                 # Provider exception strings/bodies can expose request data.
                 report.update({'status':'failed','error_type':type(error).__name__,
