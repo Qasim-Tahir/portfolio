@@ -60,7 +60,7 @@ const PROJECTS = [
 
 export default function Projects() {
   return (
-    <section id="projects">
+    <section tabIndex={-1} id="projects">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -247,7 +247,7 @@ export default function Projects() {
                     fontWeight: 500,
                     color: "var(--text-dim)",
                   }}
-                  className="hover:text-white transition-colors"
+                  className="project-code-link"
                 >
                   <Github size={16} /> Code
                 </a>
@@ -261,7 +261,7 @@ export default function Projects() {
                     fontWeight: 500,
                     color: "var(--accent)",
                   }}
-                  className="hover:opacity-80 transition-opacity"
+                  className="project-demo-link"
                 >
                   <ExternalLink size={16} /> Live Demo
                 </a>

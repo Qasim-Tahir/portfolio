@@ -131,7 +131,6 @@ web/
 ├── .python-version               # Python version constraint spec file
 ├── .vercelignore                 # Instructs Vercel what files to exclude from deployment
 ├── index.html                    # Entrypoint HTML — loads Google Fonts (Inter, Outfit)
-├── main.py                       # Python template file (unused)
 ├── package.json                  # NPM packages & scripts
 ├── package-lock.json             # NPM package lockfile
 ├── project_context.md            # Portfolio Project context and log (this file)
@@ -197,7 +196,6 @@ web/
 ```json
 {
   "dependencies": {
-    "@studio-freight/react-lenis": "^0.0.47",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^11.2.10",
@@ -220,7 +218,7 @@ web/
 }
 ```
 
-Note: `@studio-freight/react-lenis` remains in `package.json` but is no longer imported anywhere — Lenis was ripped out of `App.jsx` in favor of native `scroll-behavior: smooth` (see decision log). It's dead weight in the dependency tree, not a live behavior.
+Update (12 October 2026): removed the unused `@studio-freight/react-lenis` dependency and the placeholder `main.py`. Navigation uses native fragments and browser history with CSS smooth scrolling, honoring reduced-motion preferences.
 
 ---
 

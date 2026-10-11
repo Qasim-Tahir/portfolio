@@ -38,7 +38,8 @@ const WordReveal = ({ text }) => {
           style={{
             display: "inline-block",
             marginRight: "0.25em",
-            whiteSpace: "nowrap",
+            maxWidth: "100%",
+            overflowWrap: "anywhere",
           }}
         >
           {word}
@@ -50,7 +51,8 @@ const WordReveal = ({ text }) => {
 
 export default function Hero() {
   return (
-    <section
+    <section tabIndex={-1}
+      id="home"
       className="hero"
       style={{
         position: "relative",
@@ -62,7 +64,6 @@ export default function Hero() {
         width: "100%",
         minHeight: "90vh",
         // THE FIX: Allow vertical bleeding, prevent horizontal scrollbars
-        overflowX: "clip",
         overflowY: "visible",
       }}
     >
@@ -123,6 +124,7 @@ export default function Hero() {
           position: "relative",
           zIndex: 1,
           maxWidth: "1000px",
+          width: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -148,8 +150,9 @@ export default function Hero() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              flexWrap: "nowrap",
-              whiteSpace: "nowrap",
+              flexWrap: "wrap",
+              maxWidth: "100%",
+              overflowWrap: "anywhere",
               marginTop: "0.1em",
             }}
           >
@@ -196,13 +199,13 @@ export default function Hero() {
             justifyContent: "center",
           }}
         >
-          <button
+          <a
+            href="#projects"
             className="btn btn-primary"
-            onClick={() => document.getElementById("projects").scrollIntoView()}
             style={{ padding: "0.8rem 1.8rem", fontSize: "1rem" }}
           >
             View Projects <ArrowRight size={18} />
-          </button>
+          </a>
 
           {/* THE CV BUTTON */}
           <a
@@ -221,13 +224,13 @@ export default function Hero() {
             <Download size={18} /> Resume
           </a>
 
-          <button
+          <a
+            href="#about"
             className="btn btn-secondary"
-            onClick={() => document.getElementById("about").scrollIntoView()}
             style={{ padding: "0.8rem 1.8rem", fontSize: "1rem" }}
           >
             <Terminal size={18} /> About Me
-          </button>
+          </a>
         </motion.div>
       </motion.div>
     </section>

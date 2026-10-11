@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Send, X, Bot, User, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
@@ -24,6 +24,9 @@ export default function ChatBot() {
   // NEW: State to control the tooltip visibility
   const [showTooltip, setShowTooltip] = useState(false);
 
+  const reducedMotion = useReducedMotion();
+  const launcherRef = useRef(null);
+  const restoreFocusRef = useRef(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -34,7 +37,8 @@ export default function ChatBot() {
   const pendingQuestionRef = useRef("");
   const [error, setError] = useState("");
 
-  function closeChat() {
+  function closeChat(returnFocus = false) {
+    restoreFocusRef.current = returnFocus;
     requestIdRef.current += 1;
     if (sessionRef.current.active) {
       sessionRef.current.cancel();
@@ -66,7 +70,7 @@ export default function ChatBot() {
       }
     }
     function handleEscape(event) {
-      if (event.key === "Escape") closeChat();
+      if (event.key === "Escape") closeChat(true);
     }
     // Only bind the listener if the chat is actually open
     if (isOpen) {
@@ -79,8 +83,8 @@ export default function ChatBot() {
     };
   }, [isOpen]);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    bottomRef.current?.scrollIntoView({ behavior: reducedMotion ? "instant" : "smooth" });
+  }, [messages, loading, reducedMotion]);
 
   useEffect(() => {
     if (isOpen && !loading) {
@@ -213,6 +217,9 @@ export default function ChatBot() {
             {/* 2. Main Button with Pulse */}
             <button
               className="btn btn-primary"
+              ref={launcherRef}
+              aria-haspopup="dialog"
+              aria-controls="portfolio-chat"
               onClick={() => {
                 setIsOpen(true);
                 setShowTooltip(false); // Hide tooltip instantly when opened
@@ -233,12 +240,17 @@ export default function ChatBot() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => {
+        if (restoreFocusRef.current) launcherRef.current?.focus();
+        restoreFocusRef.current = false;
+      }}>
         {isOpen && (
           <motion.div
             ref={chatWindowRef}
             className="chat-container"
-            role="region"
+            id="portfolio-chat"
+            role="dialog"
+            aria-modal="false"
             aria-label="Portfolio chat"
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -278,7 +290,7 @@ export default function ChatBot() {
               <button className="chat-reset" onClick={resetChat}>New chat</button>
               <button
                 aria-label="Close chat"
-                onClick={closeChat}
+                onClick={() => closeChat(true)}
                 style={{
                   background: "none",
                   border: "none",

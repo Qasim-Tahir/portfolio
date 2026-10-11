@@ -50,7 +50,7 @@ const HIGHLIGHTS = [
 
 export default function Experience() {
   return (
-    <section id="experience">
+    <section tabIndex={-1} id="experience">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}

@@ -53,7 +53,7 @@ const SKILLS = [
 
 export default function Skills() {
   return (
-    <section id="skills">
+    <section tabIndex={-1} id="skills">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -66,15 +66,16 @@ export default function Skills() {
       </motion.div>
 
       <div
+        className="skills-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
           gap: "2rem",
         }}
       >
         {SKILLS.map((skill, i) => (
           <motion.div
             key={skill.category}
+            className={skill.items.length > 8 ? "skill-group skill-group-wide" : "skill-group"}
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -82,16 +83,13 @@ export default function Skills() {
             style={{
               display: "flex",
               height: "100%",
-              gridColumn:
-                skill.items.length > 8 ? "span 2" : "span 1",
             }}
           >
             {/* The CSS .card class is now safely on the inner div */}
             <div
-              className="card"
+              className="card skill-card"
               style={{
                 width: "100%",
-                padding: "2.5rem",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-start",

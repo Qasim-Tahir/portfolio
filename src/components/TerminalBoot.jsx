@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const terminalContainer = {
   hidden: { opacity: 1 },
@@ -26,6 +26,7 @@ const cursorVariant = {
 };
 
 export default function TerminalBoot({ onComplete }) {
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
@@ -35,8 +36,8 @@ export default function TerminalBoot({ onComplete }) {
 
   return (
     <motion.div
-      exit={{ opacity: 0, filter: "blur(10px)" }}
-      transition={{ duration: 0.6, ease: "easeInOut" }}
+      exit={reducedMotion ? { opacity: 0 } : { opacity: 0, filter: "blur(10px)" }}
+      transition={{ duration: reducedMotion ? 0 : 0.6, ease: "easeInOut" }}
       style={{
         position: "fixed",
         inset: 0,
@@ -56,7 +57,7 @@ export default function TerminalBoot({ onComplete }) {
       }}
     >
       <motion.div
-        variants={terminalContainer}
+        variants={reducedMotion ? undefined : terminalContainer}
         initial="hidden"
         animate="visible"
         // PURE WHITE BASE TEXT FOR MAXIMUM CONTRAST
@@ -68,7 +69,7 @@ export default function TerminalBoot({ onComplete }) {
         }}
       >
         <motion.div
-          variants={typeLine}
+          variants={reducedMotion ? undefined : typeLine}
           style={{
             color: "#a8b2c1",
             fontStyle: "italic",
@@ -78,80 +79,80 @@ export default function TerminalBoot({ onComplete }) {
           [system] Initializing RAG Portfolio Engine...
         </motion.div>
 
-        <motion.div variants={typeLine}>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>
           <span style={{ color: "#ff2a7f" }}>from</span> portfolio.agent{" "}
           <span style={{ color: "#ff2a7f" }}>import</span>{" "}
           <span style={{ color: "#00e6ff" }}>RAG_Assistant</span>
         </motion.div>
 
-        <motion.div variants={typeLine}>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>
           <span style={{ color: "#ff2a7f" }}>from</span> models{" "}
           <span style={{ color: "#ff2a7f" }}>import</span>{" "}
           <span style={{ color: "#00e6ff" }}>Groq</span>,{" "}
           <span style={{ color: "#00e6ff" }}>Qdrant</span>
         </motion.div>
 
-        <motion.div variants={typeLine} style={{ height: "0.8em" }} />
+        <motion.div variants={reducedMotion ? undefined : typeLine} style={{ height: "0.8em" }} />
 
         <motion.div
-          variants={typeLine}
+          variants={reducedMotion ? undefined : typeLine}
           style={{ color: "#a8b2c1", fontStyle: "italic" }}
         >
           # Initialize Portfolio Assistant
         </motion.div>
 
-        <motion.div variants={typeLine}>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>
           agent = <span style={{ color: "#00e6ff" }}>RAG_Assistant</span>(
         </motion.div>
 
-        <motion.div variants={typeLine}>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>
           &nbsp;&nbsp;&nbsp;&nbsp;llm=
           <span style={{ color: "#00e6ff" }}>Groq</span>(model=
           <span style={{ color: "#39ff14" }}>"qwen3.8-27b"</span>),
         </motion.div>
 
-        <motion.div variants={typeLine}>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>
           &nbsp;&nbsp;&nbsp;&nbsp;vector_db=
           <span style={{ color: "#00e6ff" }}>Qdrant</span>(collection=
           <span style={{ color: "#39ff14" }}>"portfolio-rag"</span>)
         </motion.div>
 
-        <motion.div variants={typeLine}>)</motion.div>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>)</motion.div>
 
-        <motion.div variants={typeLine} style={{ height: "0.8em" }} />
+        <motion.div variants={reducedMotion ? undefined : typeLine} style={{ height: "0.8em" }} />
 
         <motion.div
-          variants={typeLine}
+          variants={reducedMotion ? undefined : typeLine}
           style={{ color: "#a8b2c1", fontStyle: "italic" }}
         >
           # Ingest Qasim's project documentation
         </motion.div>
 
-        <motion.div variants={typeLine}>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>
           agent.ingest(
           <span style={{ color: "#39ff14" }}>"docs/projects/"</span>)
         </motion.div>
 
-        <motion.div variants={typeLine}>agent.deploy()</motion.div>
+        <motion.div variants={reducedMotion ? undefined : typeLine}>agent.deploy()</motion.div>
 
-        <motion.div variants={typeLine} style={{ height: "1.2em" }} />
+        <motion.div variants={reducedMotion ? undefined : typeLine} style={{ height: "1.2em" }} />
 
         <motion.div
-          variants={typeLine}
+          variants={reducedMotion ? undefined : typeLine}
           style={{ color: "#00e6ff", fontWeight: "bold" }}
         >
           &gt; RAG Pipeline Active.
         </motion.div>
 
         <motion.div
-          variants={typeLine}
+          variants={reducedMotion ? undefined : typeLine}
           style={{ color: "#39ff14", fontWeight: "bold" }}
         >
           &gt; Interface Ready. Routing traffic...
         </motion.div>
 
         <motion.div
-          variants={cursorVariant}
+          variants={reducedMotion ? undefined : cursorVariant}
           style={{
             width: "12px",
             height: "1.2em",
