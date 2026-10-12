@@ -108,7 +108,7 @@ def is_injection_attempt(query: str) -> bool:
 def contains_private_value(text: str) -> bool:
     # Actual deployment credentials are private. Public model names, stack
     # terms, project names, and public URLs are allowed.
-    for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL', 'UPSTASH_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_URL'):
+    for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL', 'UPSTASH_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_URL', 'VERCEL_TOKEN'):
         secret = os.environ.get(name, '')
         if len(secret) >= 8 and secret in text:
             return True

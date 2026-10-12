@@ -1,4 +1,4 @@
-"""Local browser-test fixture. Never calls Groq or Qdrant."""
+"""Local browser-test fixture. Never calls Groq, Qdrant or hosted Redis."""
 import os
 import json
 from pathlib import Path
@@ -9,6 +9,9 @@ from types import SimpleNamespace as NS
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.setdefault('FRONTEND_URL', 'http://localhost:5173')
+os.environ['UPSTASH_REDIS_REST_URL'] = ''
+os.environ['UPSTASH_REDIS_REST_TOKEN'] = ''
+os.environ['VERCEL'] = ''
 from api import chat
 from scripts.dev_server import app
 

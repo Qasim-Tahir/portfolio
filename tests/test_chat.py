@@ -9,6 +9,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from contextlib import asynccontextmanager
 
 os.environ['FRONTEND_URL'] = 'http://localhost:3000'
+# Provider-free tests must not inherit configured production stores from
+# .env.local. Explicit shared-store tests install their own mocked settings.
+os.environ['UPSTASH_REDIS_REST_URL'] = ''
+os.environ['UPSTASH_REDIS_REST_TOKEN'] = ''
+os.environ['VERCEL'] = ''
 from api import chat
 from scripts.dev_server import app
 import httpx

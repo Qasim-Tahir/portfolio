@@ -42,7 +42,7 @@ def corpus_points(docs_dir):
             raise ValueError(f"Empty document: {file.name}")
         if re.search(r'(?:gsk_|sk-)[a-zA-Z0-9_-]{16,}', content):
             raise ValueError(f"Possible credential in document: {file.name}")
-        for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL', 'UPSTASH_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_URL'):
+        for name in ('GROQ_API_KEY', 'QDRANT_API_KEY', 'QDRANT_URL', 'UPSTASH_REDIS_REST_TOKEN', 'UPSTASH_REDIS_REST_URL', 'VERCEL_TOKEN'):
             secret = os.getenv(name, '')
             if len(secret) >= 8 and secret in content:
                 raise ValueError(f"Private configuration in document: {file.name}")

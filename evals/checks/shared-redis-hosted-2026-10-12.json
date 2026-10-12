@@ -1,0 +1,27 @@
+{
+  "checked_at": "2026-10-12T03:27:36.188867+00:00",
+  "status": "passed",
+  "script_sha256": "52bb7a5e7d3ab7a9498b942ba2657b9ed242ae04abf6c6521642ba358a8f550a",
+  "atomic_fixture": {
+    "independent_clients": 3,
+    "simultaneous_attempts": 3,
+    "per_ip_limit": 2,
+    "accepted": 2,
+    "rejected": 1,
+    "fresh_client_rejected": true,
+    "ip_ttl_ms": 58065
+  },
+  "lease_release_verified": true,
+  "real_expiry_verified": true,
+  "fresh_client_after_expiry_verified": true,
+  "command_observations": 13,
+  "command_latency_seconds": {
+    "p50": 0.9769,
+    "p95": 1.3994
+  },
+  "limitations": [
+    "Isolated fixture parameters; no production visitor keys touched.",
+    "Independent local REST clients sharing hosted Redis; not actual Vercel worker or HTTP routing validation.",
+    "Local-to-Redis timing; deployment region and cold/warm HTTP latency remain unverified."
+  ]
+}

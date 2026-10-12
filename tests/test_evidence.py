@@ -126,10 +126,11 @@ class EvidenceAPITests(unittest.TestCase):
         self.assertEqual(self.client.chat.completions.create.call_count, 1)
 
     def test_private_input_never_reaches_models_or_embedding(self):
-        with patch.dict(os.environ, {'GROQ_API_KEY':'private-test-key-0123456789'}):
-            status, data, _ = invoke({'messages':[user('Explain private-test-key-0123456789')]})
-        self.assertEqual(status, 200)
-        self.assertEqual(data['sources'], [])
+        for name in ('GROQ_API_KEY','VERCEL_TOKEN'):
+            with patch.dict(os.environ, {name:'private-test-key-0123456789'}):
+                status, data, _ = invoke({'messages':[user('Explain private-test-key-0123456789')]})
+            self.assertEqual(status, 200)
+            self.assertEqual(data['sources'], [])
         self.client.chat.completions.create.assert_not_called()
         self.retrieve_mock.assert_not_called()
 
