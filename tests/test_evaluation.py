@@ -23,6 +23,16 @@ class EvaluationTests(unittest.TestCase):
         aliases=[{'source':'ocr-summarizer','contains_any':['Llama 4 Scout','llama-4-scout']}]
         self.assertEqual(evidence_recall(aliases,[{'source':'ocr-summarizer','text':'meta-llama/llama-4-scout-17b-16e-instruct'}]),1)
 
+    def test_versioned_gold_evidence_exists_in_the_indexable_corpus(self):
+        from scripts.ingest import corpus_points
+        records=[point.payload for point in corpus_points(ROOT/'docs')]
+        for version in ('v1','v2'):
+            for split in ('tuning','heldout'):
+                for case in load_cases(ROOT/f'evals/{version}/{split}.jsonl'):
+                    if case['gold_evidence']:
+                        with self.subTest(version=version,split=split,id=case['id']):
+                            self.assertEqual(evidence_recall(case['gold_evidence'],records),1)
+
     def test_provider_errors_are_not_answer_latency_or_zero_cost(self):
         rows=[{'id':'H1','kind':'fact','status':'failed','elapsed_seconds':.1,'usage':[]}]
         summary=summarize(rows)

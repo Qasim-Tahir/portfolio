@@ -1,0 +1,55 @@
+{
+  "results_sha256": "42045c303456f2aaf9a6fa8d97f5530ed3f07c8dc8c103eba461bed08aa6b67c",
+  "reviewed_by": "Codex",
+  "method": "Answer-level review of every factual answer against all selected public source quotes and metadata. Not independent human review or external verification of owner-reported work.",
+  "cases": {
+    "V2H01": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H02": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H03": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H04": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H05": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H07": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H08": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H09": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "V2H10": {
+      "supported_answer": true,
+      "citation_supported": true
+    }
+  },
+  "notes": {
+    "V2H01": "Quote gives content_vector and cosine.",
+    "V2H02": "Quotes describe owner-reported interview voice agent and work context. External employment/contribution truth is not verified.",
+    "V2H03": "Quote explicitly gives manual review.",
+    "V2H04": "Quotes support ChromaDB, MiniLM and four query modalities as the project description; external runtime was not tested.",
+    "V2H05": "Both selected quotes support the distinction between entity membership and factual relationships/quantities.",
+    "V2H06": "Unnecessary no-evidence answer despite gold passage retrieval. This is a recorded false abstention, not a successful answer. No heldout prompt/retrieval tuning follows this run.",
+    "V2H07": "Quote names Neo4j.",
+    "V2H08": "Quote gives LibreOffice conversion and Poppler page images.",
+    "V2H09": "Quote compares line-item amounts and totals.",
+    "V2H10": "Quote states required shared Redis quota and 503 on missing configuration."
+  }
+}
