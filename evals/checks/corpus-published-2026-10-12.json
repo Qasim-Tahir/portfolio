@@ -1,0 +1,25 @@
+{
+  "collection": "portfolio-live",
+  "target": "portfolio-live-faaf25b7d5f0",
+  "points": 47,
+  "vector": "content_vector",
+  "dimensions": 384,
+  "distance": "Cosine",
+  "model": "sentence-transformers/all-minilm-l6-v2",
+  "checked_at": "2026-10-12T02:25:46.035051+00:00",
+  "verified_points": 47,
+  "all_payloads_match_local_corpus": true,
+  "document_versions": {
+    "about": "3167c777f36bcde67a9ff716209524cbcb45123d2a034f2f4fb2596c0afc4f4e",
+    "cognisynth-technical": "972548750f0eac930cdd62fa25212663d0834d3f4c8228075bb8444ad1ef1faa",
+    "cognisynth": "3387bdcd13b08f6f62aeab41068de80aa78d583a77eb74c13aef025d79d2d985",
+    "invoice-automation": "74a13cf73f0c9ec8943cb6bf57528b22d12835bf975a4769e84920478fa7ecc2",
+    "islamic-source-finder-technical": "0c910021af4655f2259df938f443d0865308e5e63398b542f3d6d5e0c206164a",
+    "islamic-source-finder": "8ad9db80b4ddf7effaa590996c273021052edb41b7b7a9b650fccfd31560b703",
+    "ocr-summarizer-technical": "58a1778f36682f1b03ae25c6207a4471f335178f3f1460883e7f0859a65c5b5d",
+    "ocr-summarizer": "9f835634e074f46ecdb04d48088153dfba115306de4b9c86fbe43b69142000a1",
+    "portfolio-rag-technical": "bb17cb4956844ec5c840ce1d2239e1742d24f021cbd3f01f7774021b8ad51855",
+    "portfolio-rag": "84276b23563b3e13964f06a46d34b069313789bce0eae48fceea528a6e8d5dd3"
+  },
+  "legacy_portfolio_retained": true
+}

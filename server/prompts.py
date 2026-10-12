@@ -2,6 +2,7 @@
 
 GENERATION_MODEL = "qwen/qwen3.8-27b"
 SAFEGUARD_MODEL = "openai/gpt-oss-safeguard-20b"
+GENERATION_MAX_TOKENS = 768
 
 SYSTEM_PROMPT = """You are 'Qasim's AI Portfolio Assistant', a highly technical and precise RAG agent.
 

@@ -17,7 +17,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from server.evidence import retrieval_query, NO_EVIDENCE
-from server.prompts import GENERATION_MODEL, SAFEGUARD_MODEL, SYSTEM_PROMPT, SAFEGUARD_POLICY
+from server.prompts import GENERATION_MODEL, SAFEGUARD_MODEL, SYSTEM_PROMPT, SAFEGUARD_POLICY, GENERATION_MAX_TOKENS
 from server.config import EMBED_MODEL, collection_name
 
 
@@ -46,7 +46,8 @@ def evidence_recall(gold, records):
         return None
     def matches(item, record):
         source = Path(record['source']).stem.removesuffix('-technical')
-        return source == item['source'] and item['contains'].casefold() in record['text'].casefold()
+        phrases = item.get('contains_any', [item.get('contains', '')])
+        return source == item['source'] and any(phrase and phrase.casefold() in record['text'].casefold() for phrase in phrases)
     return sum(any(matches(item, r) for r in records) for item in gold) / len(gold)
 
 
@@ -168,6 +169,10 @@ async def live(cases, delay, stop_on_error):
             row['gold_answer_checks_pass']=bool(result.get('citations')) and all(s.casefold() in result['reply'].casefold() for s in case['answer_checks'])
         except Exception as error:
             row.update({'error_type':type(error).__name__,'http_status':getattr(error,'status_code',None)})
+            response=getattr(error,'response',None)
+            if response is not None:
+                allowed=('retry-after','x-ratelimit-limit-requests','x-ratelimit-limit-tokens','x-ratelimit-remaining-requests','x-ratelimit-remaining-tokens','x-ratelimit-reset-requests','x-ratelimit-reset-tokens')
+                row['rate_headers']={name:response.headers[name][:64] for name in allowed if name in response.headers}
         row['elapsed_seconds']=round(time.monotonic()-start,4)
         row['retrieval_recall']=evidence_recall(case['gold_evidence'],observed_records)
         # Only screened, public metadata/scores are saved, never private endpoint URLs.
@@ -230,7 +235,7 @@ def main():
             'working_tree_has_changes':bool(dirty.stdout) if dirty is not None else None,
             'code_sha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in code_paths},
             'corpus_documents':{p.stem:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'docs').glob('*.md'))},
-            'configuration':{'generation_model':GENERATION_MODEL,'safeguard_model':SAFEGUARD_MODEL,'embedding_model':EMBED_MODEL,'top_k':5,'score_threshold':None,
+            'configuration':{'generation_model':GENERATION_MODEL,'safeguard_model':SAFEGUARD_MODEL,'embedding_model':EMBED_MODEL,'generation_max_tokens':GENERATION_MAX_TOKENS,'safeguard_max_tokens':1024,'top_k':5,'score_threshold':None,
                 'prompt_sha256':hashlib.sha256((SYSTEM_PROMPT+SAFEGUARD_POLICY).encode()).hexdigest(),'groq_sdk':version('groq'),'qdrant_sdk':version('qdrant-client')},
             'requested_cases':len(cases),'latency_scope':'Local Python pipeline, excluding baseline retrieval comparison; not deployed Vercel latency. First request creates new clients; subsequent requests also create clients. Provider cache/cold state cannot be controlled.',
             'limitations':['Semantic citation accuracy is reviewed at answer level: every selected citation must support the answer.','Small fixed question set; not a general quality or security guarantee.','Gold text checks and quote membership do not prove semantic correctness.','No threshold or prompt tuning on heldout cases.','Live mode skips HTTP/quota guards; those are separately regression-tested.'], 'price_snapshot':prices}

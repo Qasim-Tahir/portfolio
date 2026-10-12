@@ -1,6 +1,6 @@
 # Evaluation inputs and evidence
 
-Version 1 contains six tuning cases and twenty held-out cases. Gold evidence requires both a source and a phrase in a retrieved passage. Technical and overview files for the same project count as the same source. Gold answer text checks test explicit expected details, not every factual claim. Keep these distinctions when reporting results.
+Version 1 contains six tuning cases and twenty held-out cases. Gold evidence requires both a source and a phrase in a retrieved passage. Tuning gold may list explicit phrase alternatives for equivalent published model names/IDs; the held-out file remains unchanged. Technical and overview files for the same project count as the same source. Gold answer text checks test explicit expected details, not every factual claim. Keep these distinctions when reporting results.
 
 The held-out set is separate from tuning. Do not repeatedly change prompts or thresholds in response to its failures. Create a later dataset version for future tuning and reserve a new held-out set. No prompt, retrieval threshold, hybrid search or reranking configuration has been selected from this held-out set.
 
@@ -32,4 +32,4 @@ The digest binds labels to an exact result artifact. Without review of every ans
 
 ## Current evidence
 
-`checks/` contains dated, redacted advisory snapshots, a read-only deployment/corpus inspection, and a successful single public-fixture generation-contract check. That one fixture does not establish RAG answer quality, safeguard account access, or deployed latency. The inspected legacy corpus had no version/model metadata; the prepared replacement requires authorization before upload. No live held-out evaluation has been performed yet.
+`checks/` contains dated, redacted advisory snapshots, a read-only deployment/corpus inspection, and a successful single public-fixture generation-contract check. That one fixture does not establish RAG answer quality, safeguard account access, or deployed latency. The inspected legacy corpus had no version/model metadata. The approved replacement alias now has 47 points; every point and document hash was verified against the local corpus, and the old physical collection remains available. The initial tuning attempts exposed a 1024-token reservation rejected against a 1000-token limit. Generation now uses 768 tokens, and rate failures preserve only allowlisted headers. The original failed attempts remain in checks/ for traceability. A held-out run follows completion of tuning.

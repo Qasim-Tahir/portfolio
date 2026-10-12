@@ -27,7 +27,7 @@ def main():
         from groq import Groq
         from dotenv import load_dotenv
         load_dotenv(ROOT / '.env.local')
-        from server.prompts import SYSTEM_PROMPT, GENERATION_MODEL
+        from server.prompts import SYSTEM_PROMPT, GENERATION_MODEL, GENERATION_MAX_TOKENS
         from server.evidence import generation_format, validated_answer, strict_json
         model = GENERATION_MODEL
         text = 'Qdrant Cloud stores document chunks and serves semantic similarity queries for the portfolio assistant.'
@@ -36,7 +36,7 @@ def main():
                   'document_version':None,'score':0.8,'text':text}
         report.update({'model':model,'groq_sdk_version':version('groq'),
                        'fixture_sha256':hashlib.sha256(text.encode()).hexdigest(),
-                       'max_completion_tokens':1024,'timeout_seconds':8,'max_retries':0})
+                       'max_completion_tokens':GENERATION_MAX_TOKENS,'timeout_seconds':8,'max_retries':0})
         if not os.getenv('GROQ_API_KEY'):
             report['status'], code = 'skipped: no configured Groq key', 2
         else:
@@ -47,7 +47,7 @@ def main():
                 response = client.chat.completions.create(model=model,
                     messages=[{'role':'system','content':SYSTEM_PROMPT.format(context=json.dumps([record]))},
                               {'role':'user','content':'What does Qdrant do in the portfolio assistant?'}],
-                    response_format=generation_format(), max_completion_tokens=1024, temperature=0.3)
+                    response_format=generation_format(), max_completion_tokens=GENERATION_MAX_TOKENS, temperature=0.3)
                 choice = response.choices[0]
                 report['finish_reason'] = choice.finish_reason
                 result = validated_answer(strict_json(choice.message.content), [record])

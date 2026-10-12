@@ -91,6 +91,8 @@ class ChatTests(unittest.TestCase):
         self.assertNotIn('admin', calls[1].kwargs['messages'][-1])
         self.assertIn('Public project architecture.', calls[1].kwargs['messages'][0]['content'])
         self.client.with_options.assert_called_with(timeout=unittest.mock.ANY, max_retries=0)
+        self.assertEqual(calls[0].kwargs['max_completion_tokens'],1024)
+        self.assertEqual(calls[1].kwargs['max_completion_tokens'],768)
 
     def test_malformed_shapes_do_not_reach_providers(self):
         for body in [[], None, 123, 'hi', {}, {'messages': []}, {'messages': [None]},

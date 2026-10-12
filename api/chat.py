@@ -13,7 +13,7 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Document
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from httpx import TimeoutException
-from server.prompts import SYSTEM_PROMPT, SAFEGUARD_POLICY, GENERATION_MODEL, SAFEGUARD_MODEL
+from server.prompts import SYSTEM_PROMPT, SAFEGUARD_POLICY, GENERATION_MODEL, SAFEGUARD_MODEL, GENERATION_MAX_TOKENS
 from server.evidence import strict_json, retrieval_query, evidence_record, generation_format, validated_answer, NO_EVIDENCE
 from server.rate_limit import AsyncSharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
 from groq import AsyncGroq, APITimeoutError, APIConnectionError, APIStatusError
@@ -306,7 +306,7 @@ async def answer(messages, q, client, deadline, observer=None):
     response = await client.with_options(timeout=remaining_timeout(deadline), max_retries=0).chat.completions.create(
         model=GENERATION_MODEL,
         messages=[{"role": "system", "content": SYSTEM_PROMPT.format(context=json.dumps(records, ensure_ascii=False))}, *messages],
-        response_format=generation_format(), max_completion_tokens=1024, temperature=0.3
+        response_format=generation_format(), max_completion_tokens=GENERATION_MAX_TOKENS, temperature=0.3
     )
     if observer:
         observer('generation', response)

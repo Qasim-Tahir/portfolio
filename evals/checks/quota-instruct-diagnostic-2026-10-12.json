@@ -1,0 +1,21 @@
+{
+  "reasoning_effort": "none",
+  "scope": "One authorized generation-only diagnostic on public project passages; no safeguard call or retries.",
+  "status": "failed",
+  "error_type": "RateLimitError",
+  "http_status": 429,
+  "rate_headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "1000",
+    "x-ratelimit-remaining-tokens": "8000",
+    "x-ratelimit-reset-requests": "1ms",
+    "x-ratelimit-reset-tokens": "1ms"
+  },
+  "limit_category": "tokens per minute",
+  "numbers": [
+    "1000,",
+    "1024."
+  ],
+  "elapsed_seconds": 2.5
+}

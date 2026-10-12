@@ -17,6 +17,8 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(evidence_recall(gold,[{'source':'ocr-summarizer-technical','text':'Scout model'}]),1)
         self.assertEqual(evidence_recall(gold,[{'source':'other','text':'Scout model'}]),0)
         self.assertIsNone(evidence_recall([],[]))
+        aliases=[{'source':'ocr-summarizer','contains_any':['Llama 4 Scout','llama-4-scout']}]
+        self.assertEqual(evidence_recall(aliases,[{'source':'ocr-summarizer','text':'meta-llama/llama-4-scout-17b-16e-instruct'}]),1)
 
     def test_provider_errors_are_not_answer_latency_or_zero_cost(self):
         rows=[{'id':'H1','kind':'fact','status':'failed','elapsed_seconds':.1,'usage':[]}]
