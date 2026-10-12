@@ -17,6 +17,7 @@ class FakeQdrant:
         self.fail_batch = False
         self.bad_count = False
         self.bad_retrieval = False
+        self.bad_index = False
         self.operations = []
 
     def get_aliases(self):
@@ -39,7 +40,8 @@ class FakeQdrant:
         assert field_name == 'project' and field_schema == 'keyword' and wait is True
 
     def get_collection(self, name):
-        return NS(config=NS(params=NS(vectors={'content_vector': VectorParams(size=384, distance=Distance.COSINE)})))
+        return NS(config=NS(params=NS(vectors={'content_vector': VectorParams(size=384, distance=Distance.COSINE)})),
+                  payload_schema={} if self.bad_index else {'project':NS(data_type='keyword')})
 
     def count(self, collection_name, exact):
         return NS(count=0 if self.bad_count else len(self.collections[collection_name]))
@@ -97,7 +99,7 @@ class IngestTests(unittest.TestCase):
         self.assertIn(version, client.collections)
 
     def test_all_staging_failures_leave_live_alias_intact(self):
-        for failure in ['fail_batch', 'bad_count', 'bad_retrieval']:
+        for failure in ['fail_batch', 'bad_count', 'bad_retrieval','bad_index']:
             with self.subTest(failure=failure):
                 client = FakeQdrant()
                 setattr(client, failure, True)
@@ -110,6 +112,15 @@ class IngestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             refresh(client, 'portfolio-live', [])
         self.assertEqual(list(client.collections), ['old'])
+
+    def test_rollback_rejects_incompatible_project_index_before_switch(self):
+        client=FakeQdrant()
+        client.collections['old']=self.points
+        client.bad_index=True
+        with self.assertRaisesRegex(ValueError,'project index'):
+            rollback(client,'portfolio-live','old')
+        self.assertEqual(client.aliases['portfolio-live'],'old')
+        self.assertEqual(client.operations,[])
 
     def test_physical_name_collision_does_not_delete_or_create(self):
         client = FakeQdrant()

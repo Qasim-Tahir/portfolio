@@ -1,0 +1,11 @@
+{
+  "collection": "portfolio-live",
+  "target": "portfolio-live-faaf25b7d5f0",
+  "points": 47,
+  "vector": "content_vector",
+  "dimensions": 384,
+  "distance": "Cosine",
+  "model": "sentence-transformers/all-minilm-l6-v2",
+  "project_index": "keyword",
+  "scope": "Read-only check of published alias and project filter compatibility; the legacy physical collection has not been changed."
+}

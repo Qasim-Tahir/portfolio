@@ -13,7 +13,7 @@ if str(ROOT) not in sys.path:
 from server.config import EMBED_MODEL, VECTOR_NAME, VECTOR_SIZE, collection_name
 
 
-def inspect_collection(client, collection, require_model=False):
+def inspect_collection(client, collection, require_model=False, require_project_index=False):
     info = client.get_collection(collection)
     vectors = info.config.params.vectors
     if not isinstance(vectors, dict) or VECTOR_NAME not in vectors:
@@ -30,10 +30,15 @@ def inspect_collection(client, collection, require_model=False):
         raise ValueError("Stored embedding model does not match the query model")
     if require_model and model != EMBED_MODEL:
         raise ValueError("Collection has no embedding model metadata")
+    index = (getattr(info, 'payload_schema', None) or {}).get('project')
+    project_index = getattr(index, 'data_type', None)
+    if require_project_index and project_index != 'keyword':
+        raise ValueError("Collection needs a keyword project index for scoped retrieval")
     aliases = [a.collection_name for a in client.get_aliases().aliases if a.alias_name == collection]
     return {"collection": collection, "target": aliases[0] if aliases else collection,
             "points": count, "vector": VECTOR_NAME, "dimensions": vector.size,
-            "distance": str(vector.distance), "model": model or "unknown (legacy corpus)"}
+            "distance": str(vector.distance), "model": model or "unknown (legacy corpus)",
+            "project_index": str(project_index) if project_index else None}
 
 
 def main():

@@ -97,7 +97,7 @@ def refresh(client, alias, points):
     # Never delete the served collection, including when embedding/upload fails.
     for start in range(0, len(points), 50):
         client.upsert(collection_name=version, points=points[start:start + 50], wait=True)
-    report = inspect_collection(client, version, require_model=True)
+    report = inspect_collection(client, version, require_model=True, require_project_index=True)
     if report['points'] != len(points):
         raise ValueError("Replacement point count does not match the corpus")
     result = client.query_points(collection_name=version, using=VECTOR_NAME,
@@ -111,7 +111,7 @@ def refresh(client, alias, points):
 def rollback(client, alias, target):
     if alias == target:
         raise ValueError("Rollback target must be a physical version collection")
-    inspect_collection(client, target)
+    inspect_collection(client, target, require_model=True, require_project_index=True)
     return switch_alias(client, alias, target)
 
 
