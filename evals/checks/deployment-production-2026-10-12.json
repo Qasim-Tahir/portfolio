@@ -1,0 +1,54 @@
+{
+  "url": "https://qasim-tahir.vercel.app",
+  "expected_deployment_id": "dpl_3Bkqqxfwrn19ietJpghrTNu3Lk1h",
+  "expected_git_revision": "7885a2f6ae813de725d6b4844ea43c62a6f3ddd8",
+  "requests": [
+    {
+      "case": "page",
+      "status": 200,
+      "elapsed_seconds": 1.5586,
+      "content_type": "text/html; charset=utf-8",
+      "worker": null,
+      "worker_state": null
+    },
+    {
+      "case": "options",
+      "status": 204,
+      "elapsed_seconds": 0.3955,
+      "content_type": null,
+      "worker": "37f3433a28e6",
+      "worker_state": "reused"
+    },
+    {
+      "case": "answer",
+      "status": 200,
+      "elapsed_seconds": 1.8737,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "citation_count": 1,
+      "corpus_versions_match": true,
+      "answer_contains_384": true
+    }
+  ],
+  "active_deployment_id": "dpl_3Bkqqxfwrn19ietJpghrTNu3Lk1h",
+  "active_git_revision": "7885a2f6ae813de725d6b4844ea43c62a6f3ddd8",
+  "temporary_bypass_absent": true,
+  "status": "passed",
+  "effective_function_configuration": {
+    "api/chat.py": {
+      "maxDuration": 28
+    },
+    "region": "iad1"
+  },
+  "configuration_actions": {
+    "provider_redis_values_synced_from_validated_local_settings": true,
+    "collection_alias": "portfolio-live",
+    "frontend_origin": "https://qasim-tahir.vercel.app",
+    "production_namespace": "portfolio-chat-production",
+    "preview_namespace": "portfolio-chat-preview",
+    "admin_token_not_added_to_project": true
+  },
+  "cold_warm_scope": "Anonymous marker confirms first handled API invocation versus reuse in one Python process, not OS/container cold state. Staged first answer 5.9724s, reused answer 1.8743s; public reused answer 1.8737s. Tiny client-observed sample, not an SLO.",
+  "promotion_status": "Verified by active production deployment ID/revision and public requests; promotion returned an empty response body, so no fabricated request status is recorded."
+}

@@ -1,0 +1,120 @@
+{
+  "deployment_id": "dpl_3Bkqqxfwrn19ietJpghrTNu3Lk1h",
+  "url": "https://qasim-tahir-3u95nrl1q-qasim-tahir-s-projects.vercel.app",
+  "git_revision": "7885a2f6ae813de725d6b4844ea43c62a6f3ddd8",
+  "requests": [
+    {
+      "case": "first_answer",
+      "status": 200,
+      "expected_status": 200,
+      "elapsed_seconds": 5.9724,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "first",
+      "allow_origin_matches": true,
+      "json_received": true,
+      "reply": "The AI Portfolio Engine uses the sentence-transformers/all-minilm-l6-v2 embedding model [S1]. Qdrant stores 384-dimensional cosine vectors named content_vector [S1].",
+      "citation_count": 1,
+      "sources": [
+        "portfolio-rag-technical"
+      ],
+      "corpus_versions_match": true
+    },
+    {
+      "case": "reused_answer",
+      "status": 200,
+      "expected_status": 200,
+      "elapsed_seconds": 1.8743,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "allow_origin_matches": true,
+      "json_received": true,
+      "reply": "The AI Portfolio Engine uses the sentence-transformers/all-minilm-l6-v2 embedding model [S1]. Qdrant stores 384-dimensional cosine vectors named content_vector [S1].",
+      "citation_count": 1,
+      "sources": [
+        "portfolio-rag-technical"
+      ],
+      "corpus_versions_match": true
+    },
+    {
+      "case": "options",
+      "status": 204,
+      "expected_status": 204,
+      "elapsed_seconds": 0.4079,
+      "content_type": null,
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "allow_origin_matches": true
+    },
+    {
+      "case": "invalid_json",
+      "status": 400,
+      "expected_status": 400,
+      "elapsed_seconds": 0.7224,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "allow_origin_matches": true,
+      "json_received": true
+    },
+    {
+      "case": "wrong_media",
+      "status": 415,
+      "expected_status": 415,
+      "elapsed_seconds": 0.4895,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "allow_origin_matches": true,
+      "json_received": true
+    },
+    {
+      "case": "oversized",
+      "status": 413,
+      "expected_status": 413,
+      "elapsed_seconds": 0.9352,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "allow_origin_matches": true,
+      "json_received": true
+    },
+    {
+      "case": "deterministic_refusal",
+      "status": 200,
+      "expected_status": 200,
+      "elapsed_seconds": 0.7541,
+      "content_type": "application/json",
+      "worker": "37f3433a28e6",
+      "worker_state": "reused",
+      "allow_origin_matches": true,
+      "json_received": true,
+      "refusal_without_sources": true
+    },
+    {
+      "case": "favicon",
+      "status": 200,
+      "expected_status": 200,
+      "elapsed_seconds": 0.4173,
+      "content_type": "image/svg+xml",
+      "worker": null,
+      "worker_state": null,
+      "allow_origin_matches": false
+    },
+    {
+      "case": "share_image",
+      "status": 200,
+      "expected_status": 200,
+      "elapsed_seconds": 0.7373,
+      "content_type": "image/png",
+      "worker": null,
+      "worker_state": null,
+      "allow_origin_matches": false
+    }
+  ],
+  "latency_scope": "Client-observed HTTPS latency from this environment. Worker state means first API invocation vs reuse, not proven OS/container cold state. Provider clients are recreated per request.",
+  "bypass_create_status": 200,
+  "status": "passed",
+  "temporary_bypass_revoked": true
+}
