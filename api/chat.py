@@ -8,6 +8,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import re
 import unicodedata
+import uuid
 from http.server import BaseHTTPRequestHandler
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Document, Filter, FieldCondition, MatchValue
@@ -128,6 +129,9 @@ def sanitize_reply(reply: str) -> tuple[bool, str]:
 # In-memory rate limiting
 request_history = {}
 rate_lock = threading.Lock()
+worker_id = uuid.uuid4().hex[:12]
+worker_invocations = 0
+invocation_lock = threading.Lock()
 
 @asynccontextmanager
 async def get_clients():
@@ -343,10 +347,24 @@ async def answer(messages, q, client, deadline, observer=None):
 
 
 class handler(BaseHTTPRequestHandler):
+    def _observe_invocation(self):
+        global worker_invocations
+        with invocation_lock:
+            self.worker_state = 'first' if worker_invocations == 0 else 'reused'
+            worker_invocations += 1
+
+    def _observation_headers(self):
+        # Anonymous process marker; no IP, request text, credentials or counts.
+        if not hasattr(self, 'worker_state'):
+            self._observe_invocation()
+        self.send_header('X-Portfolio-Worker', worker_id)
+        self.send_header('X-Portfolio-Worker-State', self.worker_state)
+
     def _send_json(self, code, payload):
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
+        self._observation_headers()
         if code == 429:
             self.send_header("Retry-After", str(getattr(self, "retry_after", RATE_WINDOW)))
         self.end_headers()
@@ -359,6 +377,7 @@ class handler(BaseHTTPRequestHandler):
         asyncio.run(self.handle_post())
 
     async def handle_post(self, deadline=None):
+        self._observe_invocation()
         deadline = deadline if deadline is not None else time.monotonic() + REQUEST_BUDGET
         limiter, lease_id = None, None
         try:
@@ -426,8 +445,10 @@ class handler(BaseHTTPRequestHandler):
 
 
     def do_OPTIONS(self):
+        self._observe_invocation()
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", ALLOWED_ORIGIN)
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self._observation_headers()
         self.end_headers()

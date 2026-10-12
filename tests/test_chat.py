@@ -99,6 +99,16 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(calls[0].kwargs['max_completion_tokens'],1024)
         self.assertEqual(calls[1].kwargs['max_completion_tokens'],768)
 
+    def test_worker_observation_identifies_reuse_without_request_data(self):
+        self.client.chat.completions.create.side_effect=[completion('{"violation":0}'),answer_completion('Documented fact')]*2
+        with patch.object(chat,'worker_invocations',0):
+            first=invoke(VALID)[2]
+            second=invoke(VALID)[2]
+        self.assertEqual(first['X-Portfolio-Worker-State'],'first')
+        self.assertEqual(second['X-Portfolio-Worker-State'],'reused')
+        self.assertEqual(first['X-Portfolio-Worker'],second['X-Portfolio-Worker'])
+        self.assertRegex(first['X-Portfolio-Worker'],r'^[0-9a-f]{12}$')
+
     def test_malformed_shapes_do_not_reach_providers(self):
         for body in [[], None, 123, 'hi', {}, {'messages': []}, {'messages': [None]},
                      {'messages': [{'role': [], 'content': 'x'}]},
