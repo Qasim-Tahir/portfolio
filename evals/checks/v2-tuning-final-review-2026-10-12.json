@@ -1,0 +1,24 @@
+{
+  "results_sha256": "bcfe9a5f11aaa8322670191b1ddc51c04635db30e03531f5850d7f11ede06d7f",
+  "reviewed_by": "Codex",
+  "method": "Answer-level review against every selected quote, not independent human review or external verification.",
+  "cases": {
+    "H03": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H04": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H05": {
+      "supported_answer": true,
+      "citation_supported": true
+    }
+  },
+  "notes": {
+    "H03": "Quote explicitly states totals comparison and manual review.",
+    "H04": "Both selected quotes explicitly state ChromaDB vector store; duplicate overview/technical passages add no independent evidence.",
+    "H05": "Selected quotes explicitly distinguish entity presence from factual correctness of relationships and quantities."
+  }
+}

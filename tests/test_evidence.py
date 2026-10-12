@@ -92,15 +92,26 @@ class EvidenceTests(unittest.TestCase):
         for changed in [
             {'evidence':[{'label':'S2','quote':'Public project architecture.'}]},
             {'evidence':[{'label':'S1','quote':'A fabricated quoted passage.'}]},
-            {'evidence':base['evidence']*2}, {'answer':'A fact with no reference'},
+            {'evidence':base['evidence']*2}, {'answer':'A fact with an unrecognized reference (S1)'},
             {'answer':'A fact [S99]'}, {'supported':'true'}, {'evidence':[]},
             {'extra':True}, {'evidence':[{'label':'S1','quote':'Public project architecture.','extra':1}]},
         ]:
             with self.subTest(changed=changed), self.assertRaises(ValueError):
                 validated_answer(base | changed, RECORDS)
         self.assertEqual(validated_answer({'answer':'','supported':False,'evidence':[]},RECORDS),{'reply':NO_EVIDENCE,'sources':[],'citations':[]})
+        self.assertEqual(validated_answer(base|{'answer':'A fact with no reference'},RECORDS)['reply'],
+                         'A fact with no reference [S1]')
         with self.assertRaises(ValueError):
             validated_answer({'answer':'An unsupported guess','supported':False,'evidence':[]},RECORDS)
+
+    def test_grouped_references_preserve_id_validation(self):
+        records=[RECORDS[0],{**RECORDS[0],'label':'S2','chunk_id':'second'}]
+        data={'answer':'A documented fact [S1, S2].','supported':True,
+              'evidence':[{'label':label,'quote':'Public project architecture.'} for label in ['S1','S2']]}
+        self.assertEqual(validated_answer(data,records)['reply'],'A documented fact [S1] [S2].')
+        for answer in ['A fact [S1, S99].','A fact [S1-S2].','A fact [S1, arbitrary].','A fact [S1].']:
+            with self.assertRaises(ValueError): validated_answer(data|{'answer':answer},records)
+        with self.assertRaises(ValueError): validated_answer(data|{'answer':'x'*6000},records)
 
 
 # Reuse setup only, avoiding inheriting and rerunning the complete API suite.

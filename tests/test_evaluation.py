@@ -6,11 +6,13 @@ from server.evidence import NO_EVIDENCE
 
 class EvaluationTests(unittest.TestCase):
     def test_dataset_splits_do_not_overlap_and_cover_categories(self):
-        tuning = load_cases(ROOT / 'evals/v1/tuning.jsonl')
-        heldout = load_cases(ROOT / 'evals/v1/heldout.jsonl')
-        self.assertFalse({r['id'] for r in tuning} & {r['id'] for r in heldout})
-        for cases in (tuning, heldout):
-            self.assertEqual({r['kind'] for r in cases}, {'fact','followup','unknown','unrelated','attack','social'})
+        for version in ('v1','v2'):
+            tuning = load_cases(ROOT / f'evals/{version}/tuning.jsonl')
+            heldout = load_cases(ROOT / f'evals/{version}/heldout.jsonl')
+            self.assertFalse({r['id'] for r in tuning} & {r['id'] for r in heldout})
+            self.assertFalse({str(r['messages']) for r in tuning} & {str(r['messages']) for r in heldout})
+            for cases in (tuning, heldout):
+                self.assertEqual({r['kind'] for r in cases}, {'fact','followup','unknown','unrelated','attack','social'})
         self.assertFalse(sync(check=True))
 
     def test_recall_requires_matching_source_and_passage(self):

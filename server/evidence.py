@@ -129,7 +129,21 @@ def validated_answer(data, records):
             raise ValueError('Citation must quote the retrieved passage exactly')
         record = by_label[label]
         citations[label] = {key: value for key, value in record.items() if key != 'text'} | {'excerpt': quote}
+    # Models sometimes group references as [S1, S2]. Expand only a strict
+    # citation group; identities still must exactly match selected evidence.
+    answer = re.sub(r'\[(S[0-9]+(?:\s*,\s*S[0-9]+)+)\]',
+                    lambda match: ' '.join(f'[{label.strip()}]' for label in match[1].split(',')), answer)
+    if len(answer) > 6000:
+        raise ValueError('Invalid supported answer')
     inline = set(re.findall(r'\[S([0-9]+)\]', answer))
+    if not inline and not re.search(r'\bS[0-9]+\b', answer):
+        # Selected evidence already has verified identities and exact quotes.
+        # Format absent tags deterministically instead of failing a good
+        # structured response solely because of model presentation.
+        answer = answer.rstrip() + ' ' + ' '.join(f'[{label}]' for label in citations)
+        inline = {label[1:] for label in citations}
+    if len(answer) > 6000:
+        raise ValueError('Invalid supported answer')
     if {'S' + number for number in inline} != set(citations):
         raise ValueError('Inline references and selected evidence must match')
     # Preserve retrieval order even if the model lists labels in reverse order.

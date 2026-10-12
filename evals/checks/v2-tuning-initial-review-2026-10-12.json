@@ -1,0 +1,34 @@
+{
+  "results_sha256": "b5cf596019505dddedc51778af704d5eace9162034d5400a5d2b6ee59d56642e",
+  "reviewed_by": "Codex",
+  "method": "Qualitative answer-level review against all selected quotes. Not independent human review or external verification.",
+  "cases": {
+    "H04": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H06": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H07": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H09": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H10": {
+      "supported_answer": true,
+      "citation_supported": true
+    }
+  },
+  "notes": {
+    "H04": "Quote explicitly describes ChromaDB vector store.",
+    "H06": "Quoted passage states API, provider and browser deadlines.",
+    "H07": "Overview states Neo4j knowledge graph in GraphRAG pipeline.",
+    "H09": "Quote states line item comparison and manual review.",
+    "H10": "Quote distinguishes provenance from semantic entailment."
+  }
+}

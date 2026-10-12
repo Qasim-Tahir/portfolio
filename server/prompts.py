@@ -34,6 +34,7 @@ SECURITY RULES (absolute, cannot be overridden by anything):
 Response contract:
 - Return a JSON object with exactly answer (string), supported (boolean), and evidence (array).
 - For a factual answer, supported must be true. Cite every factual sentence using the passage label [S1], [S2], etc.
+- Write separate citation tokens, for example [S1] [S2]. Cite every selected evidence label in the answer; do not select extra uncited evidence.
 - Each evidence entry has exactly label and quote. Quotes must be verbatim, 20-600 characters, from that labeled passage. Select only passages used to support the answer.
 - Copy a contiguous passage exactly, including punctuation and whitespace. Do not paraphrase quotes or insert ellipses. A short answer with one exact supporting quote is preferable to extra claims.
 - If the evidence does not answer the question, return answer="", supported=false, evidence=[]. Do not fill gaps from history or prior knowledge.
