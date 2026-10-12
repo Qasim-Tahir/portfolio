@@ -35,6 +35,9 @@ class FakeQdrant:
             raise RuntimeError('Embedding or upload failed')
         self.collections[collection_name].extend(points)
 
+    def create_payload_index(self, collection_name, field_name, field_schema, wait):
+        assert field_name == 'project' and field_schema == 'keyword' and wait is True
+
     def get_collection(self, name):
         return NS(config=NS(params=NS(vectors={'content_vector': VectorParams(size=384, distance=Distance.COSINE)})))
 

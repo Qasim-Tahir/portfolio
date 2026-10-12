@@ -1,0 +1,24 @@
+{
+  "results_sha256": "86549c89f893d59ccbb394299076f44ebacc51c2cc7e4851362cd4b61ff3ad06",
+  "reviewed_by": "Codex",
+  "method": "Answer-level review against every selected public quote; not independent human review or external verification.",
+  "cases": {
+    "H01": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H02": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "H08": {
+      "supported_answer": true,
+      "citation_supported": true
+    }
+  },
+  "notes": {
+    "H01": "Quoted passage gives Qdrant, 384 cosine content_vector and exact MiniLM ID.",
+    "H02": "Quote supports owner-reported employer, role and degree status.",
+    "H08": "Quote supports configured Scout model and Book_processor.py; answer lowercases filename, a minor naming inconsistency."
+  }
+}

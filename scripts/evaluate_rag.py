@@ -86,9 +86,11 @@ def summarize(rows, prices=None, reviews=None):
         'attempted_cases':len(rows), 'completed_cases':len(completed), 'failed_cases':len(rows)-len(completed),
         'answered_fact_cases':len(answered), 'completed_fact_cases':len(facts),
         'completed_unknown_cases':len(unknown), 'completed_attack_unrelated_cases':len(blocks),
-        'retrieval_recall_at_5':ratio([r['retrieval_recall'] for r in facts if r.get('retrieval_recall') is not None]),
+        'retrieval_recall_at_5':ratio([r['retrieval_recall'] for r in facts if r.get('retrieval_attempted', True) and r.get('retrieval_recall') is not None]),
+        'fact_retrieval_attempts':sum(r.get('retrieval_attempted', bool(r.get('retrieved'))) for r in facts),
+        'end_to_end_gold_evidence_rate':ratio([r['retrieval_recall'] for r in facts if r.get('retrieval_recall') is not None]),
         'baseline_followup_recall_at_5':ratio([r['baseline_recall'] for r in facts if r.get('baseline_recall') is not None]),
-        'contextual_followup_recall_at_5':ratio([r['retrieval_recall'] for r in facts if r['kind']=='followup' and r.get('retrieval_recall') is not None]),
+        'contextual_followup_recall_at_5':ratio([r['retrieval_recall'] for r in facts if r['kind']=='followup' and r.get('retrieval_attempted', True) and r.get('retrieval_recall') is not None]),
         'gold_answer_text_check_rate':ratio([r['gold_answer_checks_pass'] for r in facts]),
         'false_refusal_rate':ratio([r.get('reply') in (NO_EVIDENCE, "I can only answer questions about Qasim's portfolio.") for r in facts]),
         'unknown_abstention_rate':ratio([r.get('reply') in (NO_EVIDENCE, "I can only answer questions about Qasim's portfolio.") and not r.get('citations') for r in unknown]),
@@ -135,15 +137,19 @@ async def live(cases, delay, stop_on_error):
     for index,case in enumerate(cases):
         observed_records=[]
         usage=[]
+        row={'id':case['id'],'kind':case['kind'],'status':'failed','usage':usage,'retrieval_attempted':False}
         def observe(stage,value):
             if stage=='retrieval':
+                row['retrieval_attempted']=True
                 observed_records.extend(value)
+            elif stage=='validation_failure':
+                row['validation_failure']=value
             else:
                 counts=getattr(value,'usage',None)
                 usage.append({'stage':stage,'model':SAFEGUARD_MODEL if stage=='safeguard' else GENERATION_MODEL,
-                    'input_tokens':getattr(counts,'prompt_tokens',None),'output_tokens':getattr(counts,'completion_tokens',None)})
+                    'input_tokens':getattr(counts,'prompt_tokens',None),'output_tokens':getattr(counts,'completion_tokens',None),
+                    'finish_reason':getattr(value.choices[0],'finish_reason',None) if getattr(value,'choices',None) else None})
         start=time.monotonic()
-        row={'id':case['id'],'kind':case['kind'],'status':'failed','usage':usage}
         try:
             messages=chat.validate_messages({'messages':case['messages']})
             deterministic=any(chat.is_injection_attempt(m['content']) or chat.contains_private_value(m['content']) for m in messages)
@@ -205,6 +211,7 @@ async def remote_manifest():
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live',action='store_true')
+    parser.add_argument('--dataset-version',choices=['v1','v2'],default='v1')
     parser.add_argument('--split',choices=['tuning','heldout'],default='heldout')
     parser.add_argument('--limit',type=int,default=20)
     parser.add_argument('--delay',type=float,default=3,help='Seconds between sequential live cases')
@@ -224,14 +231,14 @@ def main():
         report['metrics']=summarize(report['cases'],prices,reviews)
         if reviews: report['semantic_review']={k:v for k,v in reviews.items() if k!='cases'}
     else:
-        dataset=ROOT/f'evals/v1/{args.split}.jsonl'
+        dataset=ROOT/f'evals/{args.dataset_version}/{args.split}.jsonl'
         cases=load_cases(dataset)[:args.limit]
         revision=subprocess.run(['git','rev-parse','HEAD'],cwd=ROOT,capture_output=True,text=True)
         git=revision.stdout.strip() if revision.returncode==0 else None
         dirty=subprocess.run(['git','status','--porcelain'],cwd=ROOT,capture_output=True,text=True) if git else None
         code_paths=[ROOT/'api/chat.py', *sorted((ROOT/'server').glob('*.py')), ROOT/'scripts/evaluate_rag.py', ROOT/'scripts/ingest.py']
         report={'schema_version':1,'checked_at':datetime.now(timezone.utc).isoformat(),'mode':'live' if args.live else 'offline_fixture',
-            'split':args.split,'dataset_sha256':hashlib.sha256(dataset.read_bytes()).hexdigest(), 'git_revision':git,
+            'split':args.split,'dataset_version':args.dataset_version,'dataset_sha256':hashlib.sha256(dataset.read_bytes()).hexdigest(), 'git_revision':git,
             'working_tree_has_changes':bool(dirty.stdout) if dirty is not None else None,
             'code_sha256':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in code_paths},
             'corpus_documents':{p.stem:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'docs').glob('*.md'))},

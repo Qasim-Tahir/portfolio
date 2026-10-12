@@ -12,7 +12,7 @@ from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharac
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import (
     PointStruct, Document, VectorParams, Distance, CreateAliasOperation,
-    CreateAlias, DeleteAliasOperation, DeleteAlias,
+    CreateAlias, DeleteAliasOperation, DeleteAlias, PayloadSchemaType,
 )
 try:
     from scripts.check_qdrant import EMBED_MODEL, VECTOR_NAME, VECTOR_SIZE, inspect_collection
@@ -92,6 +92,8 @@ def refresh(client, alias, points):
     version = f"{alias}-{uuid.uuid4().hex[:12]}"
     client.create_collection(collection_name=version,
         vectors_config={VECTOR_NAME: VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE)})
+    client.create_payload_index(collection_name=version, field_name='project',
+                                field_schema=PayloadSchemaType.KEYWORD, wait=True)
     # Never delete the served collection, including when embedding/upload fails.
     for start in range(0, len(points), 50):
         client.upsert(collection_name=version, points=points[start:start + 50], wait=True)

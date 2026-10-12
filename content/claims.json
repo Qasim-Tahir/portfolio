@@ -71,9 +71,11 @@
       "category": "scale_production",
       "original": "Sub-second answers and cold starts under two seconds",
       "status": "needs_evidence",
-      "reason": "No successful live p50/p95 run with declared cold/warm conditions is available. Provider rejection timings are not answer latency.",
+      "reason": "The original absolute latency promises have no reproducible deployment measurement. Local Python pipeline timings now exist with sample sizes and explicit cache/cold-state limitations; these do not establish Vercel cold/warm performance.",
       "public_action": "Remove absolute promises; record measured values only in evaluation reports.",
-      "evidence": []
+      "evidence": [
+        "evals/checks/heldout-v1-reviewed-2026-10-12.json"
+      ]
     },
     {
       "id": "s2",

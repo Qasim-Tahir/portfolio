@@ -155,10 +155,10 @@
     }
   ],
   "historical_benchmark": {
-    "status": "evidence_pending",
+    "status": "retired_unverified",
     "evaluation_date": null,
     "dataset_size": null,
     "comparator_model_versions": null,
-    "note": "Old narrative labels conflict. No date, exact comparator versions, scripts, inputs or raw run artifacts were supplied. The historical narrative is archived outside the indexed corpus and is not a verified comparison."
+    "note": "Conflicting historical rankings are retired from active UI and retrieval. Dates, exact comparator versions, scripts, inputs and raw artifacts are unknown. Original material is retained in the labeled archive; re-publication requires reproducible evidence."
   }
 }

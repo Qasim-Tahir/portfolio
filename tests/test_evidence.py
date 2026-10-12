@@ -50,6 +50,22 @@ class QueryTests(unittest.TestCase):
 
 
 class EvidenceTests(unittest.TestCase):
+    def test_retrieval_scopes_only_a_single_named_project(self):
+        q=MagicMock()
+        q.query_points=AsyncMock(return_value=NS(points=[]))
+        import asyncio
+        for query, expected in [('Explain LuminaNotes','LuminaNotes'),
+                                ('Compare CogniSynth and LuminaNotes',None),
+                                ('What is Qasim working on?',None),
+                                (retrieval_query([user('Explain CogniSynth'),assistant('LuminaNotes'),user('What database?')]),'CogniSynth')]:
+            asyncio.run(chat.retrieve(query,client=q))
+            scope=q.query_points.call_args.kwargs['query_filter']
+            if expected is None:
+                self.assertIsNone(scope)
+            else:
+                self.assertEqual(scope.must[0].key,'project')
+                self.assertEqual(scope.must[0].match.value,expected)
+
     def test_metadata_and_legacy_fallback_identifiers(self):
         point = NS(id='chunk-123',score=.8,payload={'source':'ocr-summarizer-technical','text':'Llama 4 Scout extracts math formulas.', 'section':'Extraction','subsection':'Formulas','document_hash':'v1'})
         record = evidence_record(point, 1)

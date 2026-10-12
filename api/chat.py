@@ -10,11 +10,11 @@ import re
 import unicodedata
 from http.server import BaseHTTPRequestHandler
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.http.models import Document
+from qdrant_client.http.models import Document, Filter, FieldCondition, MatchValue
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from httpx import TimeoutException
 from server.prompts import SYSTEM_PROMPT, SAFEGUARD_POLICY, GENERATION_MODEL, SAFEGUARD_MODEL, GENERATION_MAX_TOKENS
-from server.evidence import strict_json, retrieval_query, evidence_record, generation_format, validated_answer, NO_EVIDENCE
+from server.evidence import strict_json, retrieval_query, named_projects, evidence_record, generation_format, validated_answer, NO_EVIDENCE
 from server.rate_limit import AsyncSharedLimiter, Settings, LimitExceeded, LimitUnavailable, client_identity, uses_shared_store
 from groq import AsyncGroq, APITimeoutError, APIConnectionError, APIStatusError
 
@@ -231,11 +231,15 @@ def read_body(stream, length, deadline, connection=None):
 
 async def retrieve(query: str, timeout=PROVIDER_TIMEOUT, *, client):
     q = client
+    projects = named_projects(query)
+    # A single explicitly discussed project scopes retrieval to its documents.
+    # Comparisons and unnamed questions remain global rather than guessing.
+    scope = Filter(must=[FieldCondition(key="project", match=MatchValue(value=projects[0]))]) if len(projects) == 1 else None
     try:
         results = (await q.query_points(
             collection_name=collection_name(),
             query=Document(text=query, model=EMBED_MODEL),
-            using="content_vector", limit=5, with_payload=True, timeout=max(1, int(timeout))
+            using="content_vector", limit=5, with_payload=True, timeout=max(1, int(timeout)), query_filter=scope
         )).points
     except ResponseHandlingException as error:
         if isinstance(error.source, (TimeoutError, TimeoutException)):
@@ -278,6 +282,8 @@ async def is_safe(messages, client, observer=None) -> bool:
             raise ValueError("Invalid verdict schema")
         return verdict["violation"] == 0
     except (ValueError, TypeError, AttributeError, IndexError) as error:
+        if observer:
+            observer('validation_failure', {'stage': 'safeguard', 'reason': 'invalid_verdict'})
         raise UpstreamUnavailable("Safeguard returned an invalid verdict") from error
 
 
@@ -317,6 +323,16 @@ async def answer(messages, q, client, deadline, observer=None):
             raise ValueError("Incomplete generation")
         result = validated_answer(strict_json(choice.message.content), records)
     except (ValueError, AttributeError, IndexError, TypeError) as error:
+        if observer:
+            # Controlled diagnostic categories only; no raw model output.
+            reasons = {
+                'Citation must quote the retrieved passage exactly': 'quote_mismatch',
+                'Inline references and selected evidence must match': 'inline_mismatch',
+                'Incomplete generation': 'incomplete_generation',
+                'Unsupported answer must have no claims or evidence': 'invalid_abstention',
+            }
+            reason = reasons.get(str(error), 'invalid_generation')
+            observer('validation_failure', {'stage': 'generation', 'reason': reason})
         raise UpstreamUnavailable("Invalid generation response") from error
     is_clean, reply = sanitize_reply(result['reply'])
     if not is_clean or any(contains_private_value(citation['excerpt']) for citation in result['citations']):

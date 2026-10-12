@@ -1,6 +1,7 @@
 import unittest
 from scripts.evaluate_rag import load_cases, evidence_recall, percentile, summarize, ROOT
 from scripts.sync_content import sync
+from server.evidence import NO_EVIDENCE
 
 
 class EvaluationTests(unittest.TestCase):
@@ -39,6 +40,17 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(result['quote_provenance_rate'],1)
         self.assertEqual(percentile([4,1,3,2],.95),4)
         self.assertIsNone(percentile([], .5))
+
+    def test_policy_refusal_is_not_a_retrieval_attempt(self):
+        base={'kind':'followup','status':'completed','elapsed_seconds':1,'usage':[],
+              'citations':[],'gold_answer_checks_pass':False,'baseline_recall':1}
+        rows=[base|{'id':'blocked','reply':"I can only answer questions about Qasim's portfolio.",
+                    'retrieval_attempted':False,'retrieval_recall':0},
+              base|{'id':'retrieved','reply':NO_EVIDENCE,'retrieval_attempted':True,'retrieval_recall':1}]
+        result=summarize(rows)
+        self.assertEqual(result['contextual_followup_recall_at_5'],1)
+        self.assertEqual(result['end_to_end_gold_evidence_rate'],.5)
+        self.assertEqual(result['fact_retrieval_attempts'],1)
 
 
 if __name__ == '__main__':
