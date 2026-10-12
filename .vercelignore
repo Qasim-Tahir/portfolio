@@ -33,3 +33,11 @@ main.py
 project_context.md
 project_setup.md
 security_tests.sh
+# Regression tests and local CI configuration
+tests/
+.github/
+requirements-dev.txt
+
+# Historical narratives and evaluation artifacts are not runtime inputs
+reference/
+evals/

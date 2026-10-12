@@ -1,53 +1,23 @@
-# Project Setup & Execution Guide
+# Project setup and execution
 
-This project uses a dual-server architecture for local development to ensure high performance and stability for the RAG chatbot.
+The [README](README.md) is the canonical setup, API contract, and testing guide. Use Node 24 and Python 3.12, install with `npm ci` and `uv sync --frozen`, and copy `.env.example` to `.env.local` before adding credentials.
 
-## 🚀 Running the Project
+Run the backend and frontend in separate terminals:
 
-To start the full environment (Frontend + Backend), run these commands in separate terminals:
-
-### Terminal 1: Backend (FastAPI + RAG Engine)
-This server handles the Qdrant retrieval, Groq LLM inference, and the Safety Shield.
-```bash
-uv run scripts/dev_server.py
+```sh
+uv run --frozen python scripts/dev_server.py
+npm run dev
 ```
 
-### Terminal 2: Frontend (Vite + React)
-This serves the portfolio UI and proxies `/api` requests to the backend.
-```bash
-npm run dev -- --port 3000
+The backend listens on `127.0.0.1:8000`, and Vite defaults to `http://localhost:5173`. Set `FRONTEND_URL` to the exact browser origin. If you explicitly use `npm run dev -- --port 3000`, set `FRONTEND_URL=http://localhost:3000`. Stop each server with Ctrl+C in its own terminal.
+
+Required API settings are `FRONTEND_URL`, `GROQ_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, and `COLLECTION_NAME`. Use `COLLECTION_NAME=portfolio-live` for the stable corpus alias. Configure the same alias in deployment and ingestion.
+
+Refresh documentation safely:
+
+```sh
+uv run --frozen python scripts/ingest.py --alias portfolio-live
+uv run --frozen python scripts/check_qdrant.py
 ```
 
----
-
-## 🛑 Stopping the Servers
-
-If you see an error like `[Errno 98] Address already in use`, it means the ports are still occupied by previous sessions. Use these commands to force-stop them:
-
-### To stop EVERYTHING:
-```bash
-# Kills processes running on ports 3000 (Vite) and 8000 (FastAPI)
-fuser -k 3000/tcp 8000/tcp
-```
-
-### Individual stop commands:
-*   **Stop Frontend only**: `fuser -k 3000/tcp`
-*   **Stop Backend only**: `fuser -k 8000/tcp`
-
----
-
-## 🛠️ Maintenance & Ingestion
-
-If you update your documentation in the `/docs` folder and need to refresh the AI's knowledge base:
-
-```bash
-# Re-ingest documents into Qdrant
-uv run scripts/ingest.py
-```
-
-## 🔐 Environment Variables
-Ensure your `.env.local` contains:
-- `QDRANT_URL`
-- `QDRANT_API_KEY`
-- `GROQ_API_KEY`
-- `COLLECTION_NAME=portfolio`
+The script builds and verifies a versioned replacement before switching the alias. It retains the old collection and prints its rollback command. Existing physical collections such as `portfolio` are never deleted; see the README for first-time alias migration and rollback instructions.

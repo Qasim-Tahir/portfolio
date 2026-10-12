@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-12T02:28:20.406124+00:00",
+  "mode": "live",
+  "split": "tuning",
+  "dataset_sha256": "d870d8b89d375cfed64c2bc3e591dec9e5c15c50d001a1cfaf609b93fe86003f",
+  "git_revision": "54585dfc220f50dd6a15e8b92677159c234b9b7b",
+  "working_tree_has_changes": true,
+  "code_sha256": {
+    "api/chat.py": "5484f19139dbf3d1f1f50e552963b6237fcd9de5a709bae41eefc77ed61e9be2",
+    "server/__init__.py": "7f0290286665235a87c57147df214fcb752c6b0b19c46f395b5cd21b29a22c61",
+    "server/config.py": "170c5443283ff30312433d6ea3c01963c5b7ab04ae79009554fa6ee53b361527",
+    "server/evidence.py": "eb3e4f5e7677c2367d554f4d1f8bd7a13a001673fbcfc9ec0f4d88b8f2acb385",
+    "server/prompts.py": "7d88c1ec617079406970e027c528757d98b5c6ed47519d2c2fd1223538287ca9",
+    "server/rate_limit.py": "5138749a273cd06610d0452f7dbdf630dda27089f05704638cf17139cc5fb2fd",
+    "scripts/evaluate_rag.py": "f43ff2afae397d353ff8a9eeb0f3fc6e17b8ce19a476af201b5945ad36124069",
+    "scripts/ingest.py": "ddec68026eb923bf636ad378c826b164534a028714aaf837e79b572dd3d35ae1"
+  },
+  "corpus_documents": {
+    "about": "3167c777f36bcde67a9ff716209524cbcb45123d2a034f2f4fb2596c0afc4f4e",
+    "cognisynth-technical": "972548750f0eac930cdd62fa25212663d0834d3f4c8228075bb8444ad1ef1faa",
+    "cognisynth": "3387bdcd13b08f6f62aeab41068de80aa78d583a77eb74c13aef025d79d2d985",
+    "invoice-automation": "74a13cf73f0c9ec8943cb6bf57528b22d12835bf975a4769e84920478fa7ecc2",
+    "islamic-source-finder-technical": "0c910021af4655f2259df938f443d0865308e5e63398b542f3d6d5e0c206164a",
+    "islamic-source-finder": "8ad9db80b4ddf7effaa590996c273021052edb41b7b7a9b650fccfd31560b703",
+    "ocr-summarizer-technical": "58a1778f36682f1b03ae25c6207a4471f335178f3f1460883e7f0859a65c5b5d",
+    "ocr-summarizer": "9f835634e074f46ecdb04d48088153dfba115306de4b9c86fbe43b69142000a1",
+    "portfolio-rag-technical": "bb17cb4956844ec5c840ce1d2239e1742d24f021cbd3f01f7774021b8ad51855",
+    "portfolio-rag": "84276b23563b3e13964f06a46d34b069313789bce0eae48fceea528a6e8d5dd3"
+  },
+  "configuration": {
+    "generation_model": "qwen/qwen3.8-27b",
+    "safeguard_model": "openai/gpt-oss-safeguard-20b",
+    "embedding_model": "sentence-transformers/all-minilm-l6-v2",
+    "top_k": 5,
+    "score_threshold": null,
+    "prompt_sha256": "75fb5ca0a47d80d621b277909bae3639dd25afe40340cd6da760b8be43042286",
+    "groq_sdk": "1.2.0",
+    "qdrant_sdk": "1.18.0",
+    "collection": "portfolio-live"
+  },
+  "requested_cases": 6,
+  "latency_scope": "Local Python pipeline, excluding baseline retrieval comparison; not deployed Vercel latency. First request creates new clients; subsequent requests also create clients. Provider cache/cold state cannot be controlled.",
+  "limitations": [
+    "Semantic citation accuracy is reviewed at answer level: every selected citation must support the answer.",
+    "Small fixed question set; not a general quality or security guarantee.",
+    "Gold text checks and quote membership do not prove semantic correctness.",
+    "No threshold or prompt tuning on heldout cases.",
+    "Live mode skips HTTP/quota guards; those are separately regression-tested."
+  ],
+  "price_snapshot": {
+    "checked_at": "2026-10-12",
+    "source": "https://console.groq.com/docs/models",
+    "currency": "USD",
+    "scope": "Published token rates, not actual billing. Qdrant, Redis and hosting excluded.",
+    "models": {
+      "qwen/qwen3.8-27b": {
+        "input_usd_per_million": 0.8,
+        "output_usd_per_million": 4.0,
+        "release_status": "preview"
+      },
+      "openai/gpt-oss-safeguard-20b": {
+        "input_usd_per_million": 0.075,
+        "output_usd_per_million": 0.3,
+        "release_status": "preview"
+      }
+    }
+  },
+  "remote_corpus": {
+    "collection": "portfolio-live",
+    "target": "portfolio-live-faaf25b7d5f0",
+    "point_count": 47,
+    "scanned_points": 47,
+    "scan_complete": true,
+    "document_versions": {
+      "islamic-source-finder": [
+        "8ad9db80b4ddf7effaa590996c273021052edb41b7b7a9b650fccfd31560b703"
+      ],
+      "cognisynth": [
+        "3387bdcd13b08f6f62aeab41068de80aa78d583a77eb74c13aef025d79d2d985"
+      ],
+      "ocr-summarizer": [
+        "9f835634e074f46ecdb04d48088153dfba115306de4b9c86fbe43b69142000a1"
+      ],
+      "about": [
+        "3167c777f36bcde67a9ff716209524cbcb45123d2a034f2f4fb2596c0afc4f4e"
+      ],
+      "portfolio-rag": [
+        "84276b23563b3e13964f06a46d34b069313789bce0eae48fceea528a6e8d5dd3"
+      ],
+      "ocr-summarizer-technical": [
+        "58a1778f36682f1b03ae25c6207a4471f335178f3f1460883e7f0859a65c5b5d"
+      ],
+      "portfolio-rag-technical": [
+        "bb17cb4956844ec5c840ce1d2239e1742d24f021cbd3f01f7774021b8ad51855"
+      ],
+      "cognisynth-technical": [
+        "972548750f0eac930cdd62fa25212663d0834d3f4c8228075bb8444ad1ef1faa"
+      ],
+      "islamic-source-finder-technical": [
+        "0c910021af4655f2259df938f443d0865308e5e63398b542f3d6d5e0c206164a"
+      ],
+      "invoice-automation": [
+        "74a13cf73f0c9ec8943cb6bf57528b22d12835bf975a4769e84920478fa7ecc2"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "T01",
+      "kind": "fact",
+      "status": "failed",
+      "usage": [
+        {
+          "stage": "safeguard",
+          "model": "openai/gpt-oss-safeguard-20b",
+          "input_tokens": 212,
+          "output_tokens": 526
+        }
+      ],
+      "deterministic": false,
+      "error_type": "RateLimitError",
+      "http_status": 429,
+      "elapsed_seconds": 2.8115,
+      "retrieval_recall": 1.0,
+      "retrieved": [
+        {
+          "chunk_id": "54d773b8-f9a4-555e-bcac-a2a913502a87",
+          "source": "portfolio-rag-technical",
+          "section": "Architecture",
+          "score": 0.36784476,
+          "document_version": "bb17cb4956844ec5c840ce1d2239e1742d24f021cbd3f01f7774021b8ad51855"
+        },
+        {
+          "chunk_id": "377b3ea6-c20f-501f-8f4c-f7a197cbb17c",
+          "source": "portfolio-rag",
+          "section": "Implementation",
+          "score": 0.36784476,
+          "document_version": "84276b23563b3e13964f06a46d34b069313789bce0eae48fceea528a6e8d5dd3"
+        },
+        {
+          "chunk_id": "77dc5a54-9863-5a44-9ea5-4c95322a3337",
+          "source": "portfolio-rag",
+          "section": "Overview",
+          "score": 0.3664351,
+          "document_version": "84276b23563b3e13964f06a46d34b069313789bce0eae48fceea528a6e8d5dd3"
+        },
+        {
+          "chunk_id": "83c1ff37-0434-5edd-9686-f70a26708970",
+          "source": "islamic-source-finder-technical",
+          "section": "Architecture",
+          "score": 0.34199417,
+          "document_version": "0c910021af4655f2259df938f443d0865308e5e63398b542f3d6d5e0c206164a"
+        },
+        {
+          "chunk_id": "01215813-8691-5e59-bbf4-5973f20a0c4b",
+          "source": "islamic-source-finder",
+          "section": "Implementation",
+          "score": 0.34199417,
+          "document_version": "8ad9db80b4ddf7effaa590996c273021052edb41b7b7a9b650fccfd31560b703"
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "attempted_cases": 1,
+    "completed_cases": 0,
+    "failed_cases": 1,
+    "answered_fact_cases": 0,
+    "completed_fact_cases": 0,
+    "completed_unknown_cases": 0,
+    "completed_attack_unrelated_cases": 0,
+    "retrieval_recall_at_5": null,
+    "baseline_followup_recall_at_5": null,
+    "contextual_followup_recall_at_5": null,
+    "gold_answer_text_check_rate": null,
+    "false_refusal_rate": null,
+    "unknown_abstention_rate": null,
+    "attack_unrelated_refusal_rate": null,
+    "quote_provenance_rate": null,
+    "supported_answer_rate": null,
+    "semantic_citation_accuracy": null,
+    "semantic_reviewed_answers": 0,
+    "selected_citations": 0,
+    "successful_provider_pipeline_latency_seconds": {
+      "sample_size": 0,
+      "p50": null,
+      "p95": null
+    },
+    "successful_answer_latency_seconds": {
+      "sample_size": 0,
+      "p50": null,
+      "p95": null
+    },
+    "first_pipeline_observation_seconds": null,
+    "subsequent_pipeline_latency_seconds": {
+      "sample_size": 0,
+      "p50": null,
+      "p95": null
+    },
+    "llm_cost_estimate_usd": 0.0001737,
+    "llm_cost_per_answered_fact_usd": null,
+    "cost_usage_complete": false,
+    "cost_scope": "Published Groq token-rate estimate across observed calls, including refusals; excludes Qdrant, Redis and hosting. Not a billed total."
+  }
+}

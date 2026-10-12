@@ -1,54 +1,25 @@
-# Portfolio RAG Technical & Security hardener
+# AI Portfolio Engine: implementation notes
 
-## Backend Architecture
+## Scope
+This summary describes implementation in this repository.
 
-The backend consists of a single serverless Python function (`api/chat.py`) running on Vercel. 
-The handler subclasses Python's `BaseHTTPRequestHandler` to provide a raw, lightweight, dependencies-optimized HTTP interface, keeping the Vercel cold-start times extremely low.
+## Architecture
+The embedding model is sentence-transformers/all-minilm-l6-v2. Qdrant stores 384-dimensional cosine vectors named content_vector.
 
-### Semantic Ingestion Pipeline
-- **Document Chunking**: Structured markdown project files under `docs/` are parsed using `MarkdownHeaderTextSplitter` to isolate sections (e.g., `## Overview`, `## Architecture`) and then chunked via `RecursiveCharacterTextSplitter` with a chunk size of 500 characters and an overlap of 80 characters.
-- **Qdrant Cloud Inference**: Ingestion utilizes Qdrant's managed cloud embeddings endpoint. We send raw text chunks directly to Qdrant, referencing the `sentence-transformers/all-minilm-l6-v2` model. Qdrant handles embedding computation internally before storing vectors, removing the need to install heavy ML packages (like PyTorch or HuggingFace) on the serverless endpoint.
-- **Named Vectors**: Stored vectors are mapped under the name `content_vector`.
+The API retrieves up to five passages and retains project, section, chunk ID, document version and similarity score. Follow-up queries use bounded recent user context.
 
----
+Groq generation uses qwen/qwen3.8-27b and classification uses openai/gpt-oss-safeguard-20b. Configured IDs do not prove account access.
 
-## 4-Layer Security Hardening System
+Selected citations must reference retrieved labels and include a verbatim quote. Validation proves quote provenance, not semantic entailment.
 
-To prevent LLM jailbreaks, system prompt extraction, indirect injection, and denial-of-service, a custom 4-Layer Security Hardening System is implemented directly within `api/chat.py`:
+The API has a 24-second cancellable request budget, eight-second provider timeouts and no Groq retries. Browser requests have a 30-second deadline.
 
-**Layer 1: Deterministic Unicode Normalization & Pattern Matching**
-Traditional injection filters fail against obfuscated prompts (e.g., zero-width spaces or Unicode homoglyphs). 
-- **Zero-Width Space Stripping**: The engine strips invisible characters (e.g., `\u200b`, `\u200c`, `\ufeff`) that are used to disrupt pattern detectors.
-- **Homoglyph Translation**: Map table (`maketrans`) resolves Cyrillic (e.g., Cyrillic `А` -> Latin `A`) and Greek (e.g., Greek `Ι` -> Latin `I`) homoglyphs back to ASCII before inspection.
-- **Spaced Letter Collapsing**: Removes extra spaces inserted between individual characters of key injection terms (e.g., `I G N O R E` -> `IGNORE`).
-- **Pattern Scanner**: Scans all messages in the conversation history (not just the final user message) against known malicious patterns (e.g., `IGNORE PREVIOUS`, `NEW SYSTEM PROMPT`, `ADMIN_OVERRIDE`).
+Production requires an atomic shared Redis quota. Defaults are ten requests per IP per minute, sixty requests globally per minute, and eight concurrent leases. Missing store configuration returns 503.
 
-**Layer 2: Model-Based Safeguard (GPT-OSS-Safeguard)**
-- A secondary, lightweight LLM safety shield model (`openai/gpt-oss-safeguard-20b`) is queried to analyze the user's intent.
-- **Fail-Closed Design**: If the safeguard model fails, times out, or hits rate limits, the request is immediately blocked by default.
+Corpus refresh builds and verifies a replacement collection before switching the portfolio-live alias, retaining old collections for rollback.
 
-**Layer 3: Persona Hardening**
-- The system instructions are designed with high-weight rules that explicitly instruct the model to prioritize safety rules over all retrieved context, user prompts, or system overrides. It is taught to never reveal its instructions or environment variables.
+## Request validation
+The API accepts JSON bodies up to 32768 bytes and at most twenty alternating user and assistant messages ending in a user message. User text is capped at 2000 characters; assistant text at 6000. The browser retains complete successful turns and bounds UTF-8 request bytes.
 
-**Layer 4: Output Sanitization**
-- Prior to writing the response to the client, the final answer is validated against strict blacklisted regex patterns.
-- If the output contains forbidden terms (such as `gsk_`, `sk-`, `QDRANT_URL`, `.env`, `<system>`), it is intercepted, blocked, and replaced with a safe fallback response to prevent API keys or internal structures from leaking.
-
----
-
-## Access Control & Infrastructure Defense
-
-### CORS & Origin Validation
-- Wildcard CORS is disabled. The server strictly validates the `Origin` header against the production `FRONTEND_URL` environment variable during preflight (`OPTIONS`) and actual requests.
-
-### Client IP Rate Limiting & Anti-Spoofing
-- **Quota**: 10 requests per 60 seconds per unique IP.
-- **Anti-Spoofing**: To prevent attackers from setting arbitrary `X-Forwarded-For` headers to get fresh rate-limit buckets, the backend parses `X-Forwarded-For` by extracting the rightmost entry. Vercel appends the true client IP at the very end of this header, ensuring spoofed IPs in the header are bypassed.
-
-### Input Payload Validation
-- Enforces a maximum request body size of 32KB.
-- Rejects requests without `application/json` Content-Type.
-- Limits the message list to 20 entries.
-- Limits individual message contents to 2000 characters.
-- Requires role to be either `user` or `assistant`.
-- Rejects nested structures or non-string values inside the message `content` field.
+## Safety limits
+Unicode normalization and injection-pattern checks run on a detection copy. The classifier permits only an explicit valid safe verdict. Known credential values and credential-shaped strings are screened. Prompt instructions and pattern filters reduce selected risks; they do not prove complete injection resistance. CORS controls browser access, not authentication or access by non-browser clients. Vercel supplies the trusted forwarded IP; direct local requests use the socket IP.

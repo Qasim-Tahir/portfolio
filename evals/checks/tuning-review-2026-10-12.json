@@ -1,0 +1,19 @@
+{
+  "results_sha256": "1d815357ab1f74bb11e8f38255f23fb21f9d1c7a545d993a52d4a8f10fa2dd36",
+  "reviewed_by": "Codex",
+  "method": "Qualitative review of each factual tuning answer against its selected verbatim source quote. Not independent human review; quote support does not establish external factual truth.",
+  "cases": {
+    "T01": {
+      "supported_answer": true,
+      "citation_supported": true
+    },
+    "T02": {
+      "supported_answer": true,
+      "citation_supported": true
+    }
+  },
+  "notes": {
+    "T01": "The quote explicitly specifies Qdrant, 384 dimensions and cosine vectors.",
+    "T02": "The quote explicitly names Book_processor.py, the exact Scout model ID, vision extraction and summarization. The literal human-name check is a false negative because the answer uses the exact model ID."
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
@@ -21,13 +21,32 @@ export default function Nav() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Smooth scroll handler
-  const handleScrollTo = (e, targetId) => {
-    e.preventDefault();
-    setIsOpen(false); // Close mobile menu if open
-    const target = document.querySelector(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
+  const menuButtonRef = useRef(null);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    menuRef.current?.querySelector('a')?.focus();
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    const handleResize = () => {
+      if (window.innerWidth > 768) setIsOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isOpen]);
+
+  // Keep native anchor navigation, including modified clicks and history.
+  const handleNavigation = (event) => {
+    if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      setIsOpen(false);
     }
   };
 
@@ -54,13 +73,13 @@ export default function Nav() {
       >
         <div className="nav-content">
           {/* THE FIX: Removed delayed entrance animations. */}
-          <div
+          <a
+            href="#home"
             className="logo"
             style={{ cursor: "pointer" }}
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             Qasim Tahir
-          </div>
+          </a>
 
           {/* Desktop Navigation */}
           <div className="nav-links">
@@ -68,7 +87,7 @@ export default function Nav() {
               <motion.a
                 key={link.name}
                 href={link.href}
-                onClick={(e) => handleScrollTo(e, link.href)}
+                onClick={handleNavigation}
                 // We keep the hover effect, but remove the delayed initial/animate fade-in
                 whileHover={{ color: "var(--fg)", y: -2 }}
                 style={{
@@ -86,9 +105,12 @@ export default function Nav() {
           {/* Mobile Menu Toggle */}
           <button
             className="mobile-menu-btn"
+            ref={menuButtonRef}
+            aria-label={isOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-navigation"
             onClick={() => setIsOpen(!isOpen)}
             style={{
-              display: "none",
               background: "none",
               border: "none",
               color: "var(--fg)",
@@ -104,6 +126,10 @@ export default function Nav() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            id="mobile-navigation"
+            ref={menuRef}
+            role="navigation"
+            aria-label="Mobile navigation"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -128,7 +154,7 @@ export default function Nav() {
               <a
                 key={link.name}
                 href={link.href}
-                onClick={(e) => handleScrollTo(e, link.href)}
+                onClick={handleNavigation}
                 style={{
                   color: "var(--text-dim)",
                   fontSize: "1.2rem",

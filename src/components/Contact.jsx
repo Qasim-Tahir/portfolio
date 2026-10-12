@@ -10,7 +10,7 @@ import {
 
 export default function Contact() {
   return (
-    <section
+    <section tabIndex={-1}
       id="contact"
       style={{ position: "relative", paddingBottom: "2rem" }}
     >
@@ -58,7 +58,7 @@ export default function Contact() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))",
           gap: "2rem",
           maxWidth: "900px",
           margin: "0 auto",
@@ -74,10 +74,9 @@ export default function Contact() {
         >
           {/* THE FIX: Inner div handles the CSS .card class */}
           <div
-            className="card"
+            className="card contact-card"
             style={{
               width: "100%",
-              padding: "3rem",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -134,10 +133,9 @@ export default function Contact() {
         >
           {/* THE FIX: Inner div handles the CSS .card class */}
           <div
-            className="card"
+            className="card contact-card"
             style={{
               width: "100%",
-              padding: "3rem",
               display: "flex",
               flexDirection: "column",
               gap: "1rem",

@@ -1,14 +1,24 @@
 [project]
 name = "web"
 version = "0.1.0"
-description = "Add your description here"
+description = "Qasim Tahir portfolio and retrieval chat API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.136.1",
     "groq>=1.2.0",
-    "langchain-text-splitters>=1.1.2",
+    "httpx>=0.28.1",
     "python-dotenv>=1.2.2",
     "qdrant-client>=1.18.0",
+]
+
+[dependency-groups]
+dev = [
+    "fakeredis[lua]>=2.34.0",
+    "fastapi>=0.136.1",
+    "langchain-text-splitters>=1.1.2",
     "uvicorn>=0.47.0",
 ]
+
+[tool.uv]
+# LangSmith's optional tooling pulls HTTPX2; prevent advisory-affected versions.
+constraint-dependencies = ["httpx2>=2.12.0", "httpcore2>=2.10.0"]

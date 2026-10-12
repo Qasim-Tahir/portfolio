@@ -3,17 +3,37 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/chat", "destination": "/api/chat.py" },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    {
+      "source": "/api/chat",
+      "destination": "/api/chat.py"
+    },
+    {
+      "source": "/((?!api/|assets/|favicon[.]svg$|social-preview[.]png$|social-preview[.]svg$|Qasim_Tahir_CV[.]pdf$).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/chat.py": {
+      "maxDuration": 28
+    }
+  }
 }

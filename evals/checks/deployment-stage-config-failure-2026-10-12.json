@@ -1,0 +1,23 @@
+{
+  "deployment_id": "dpl_FLH3UAbzzwJe4rWMswtZf37in2rF",
+  "url": "https://qasim-tahir-jg75gyd2d-qasim-tahir-s-projects.vercel.app",
+  "git_revision": "7885a2f6ae813de725d6b4844ea43c62a6f3ddd8",
+  "requests": [
+    {
+      "case": "first_answer",
+      "status": 503,
+      "expected_status": 200,
+      "elapsed_seconds": 2.7682,
+      "content_type": "application/json",
+      "worker": "8c52edfbc810",
+      "worker_state": "first",
+      "allow_origin_matches": false,
+      "json_received": true
+    }
+  ],
+  "latency_scope": "Client-observed HTTPS latency from this environment. Worker state means first API invocation vs reuse, not proven OS/container cold state. Provider clients are recreated per request.",
+  "bypass_create_status": 200,
+  "status": "failed",
+  "error_type": "ValueError",
+  "temporary_bypass_revoked": true
+}

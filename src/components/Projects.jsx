@@ -1,3 +1,4 @@
+import portfolio from "../../content/portfolio.json";
 import { motion } from "framer-motion";
 import {
   Microscope,
@@ -10,57 +11,18 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-const PROJECTS = [
-  {
-    title: "CogniSynth",
-    desc: "4-stage GraphRAG pipeline ingesting research papers into a Neo4j knowledge graph, with a two-pass VLM figure enrichment module and hallucination detection. Scored 82.46% composite on a custom 4-axis eval benchmarked against GPT-5.5 and Gemini 3.1 Pro via Ragas.",
-    tech: ["Neo4j", "GraphRAG", "BGE-Reranker", "Ragas", "Three.js"],
-    icon: <Microscope size={20} />,
-    flow: ["PDFs", "VLM + NER", "Graph DB"],
-    gradient:
-      "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.05) 100%)",
-  },
-  {
-    title: "LuminaNotes",
-    desc: "Vision-first OCR and academic summarization system. Processes PDFs, PPTX, and videos into Notion-ready study guides.",
-    tech: ["Llama 3 Vision", "Whisper", "FastAPI"],
-    icon: <FileText size={20} />,
-    flow: ["Multi-modal", "OCR Agent", "Notion"],
-    gradient:
-      "linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(216, 180, 254, 0.05) 100%)",
-  },
-  {
-    title: "Invoice Automation",
-    desc: "End-to-end n8n workflow for structured data extraction from multi-format invoices using Vision-Language Models.",
-    tech: ["n8n", "VLM", "Python"],
-    icon: <Zap size={20} />,
-    flow: ["Email/Doc", "n8n Flow", "JSON"],
-    gradient:
-      "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(134, 239, 172, 0.05) 100%)",
-  },
-  {
-    title: "Islamic Source Finder",
-    desc: "Multi-modal semantic retrieval system for religious texts, supporting text, image, audio, and video queries.",
-    tech: ["ChromaDB", "OCR", "Whisper"],
-    icon: <BookOpen size={20} />,
-    flow: ["Query", "Embedding", "Vector DB"],
-    gradient:
-      "linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(253, 224, 71, 0.05) 100%)",
-  },
-  {
-    title: "AI Portfolio Engine",
-    desc: "This site's production RAG chatbot — Qdrant + Groq over project documentation with source-attributed, sub-second answers, behind a 4-layer LLM security pipeline (injection detection, safeguard classification, persona-hardened prompts, output sanitization).",
-    tech: ["Qdrant", "Groq", "LangChain", "Vercel"],
-    icon: <MessageSquare size={20} />,
-    flow: ["Docs", "RAG + Security", "Chat UI"],
-    gradient:
-      "linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(251, 182, 206, 0.05) 100%)",
-  },
+const VISUALS = [
+  { icon: <Microscope size={20} />, gradient: "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.05) 100%)" },
+  { icon: <FileText size={20} />, gradient: "linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(216, 180, 254, 0.05) 100%)" },
+  { icon: <Zap size={20} />, gradient: "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(134, 239, 172, 0.05) 100%)" },
+  { icon: <BookOpen size={20} />, gradient: "linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(253, 224, 71, 0.05) 100%)" },
+  { icon: <MessageSquare size={20} />, gradient: "linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(251, 182, 206, 0.05) 100%)" },
 ];
+const PROJECTS = portfolio.projects.map((project, index) => ({ ...project, ...VISUALS[index] }));
 
-export default function Projects() {
+export default function Projects({ onOpenChat }) {
   return (
-    <section id="projects">
+    <section tabIndex={-1} id="projects">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -227,44 +189,28 @@ export default function Projects() {
                 ))}
               </div>
 
-              {/* Action Links anchored to the bottom */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1.5rem",
-                  marginTop: "auto",
-                  paddingTop: "1.5rem",
-                  borderTop: "1px solid var(--border)",
-                }}
-              >
-                <a
-                  href="#"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 500,
-                    color: "var(--text-dim)",
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  <Github size={16} /> Code
-                </a>
-                <a
-                  href="#"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    fontSize: "0.9rem",
-                    fontWeight: 500,
-                    color: "var(--accent)",
-                  }}
-                  className="hover:opacity-80 transition-opacity"
-                >
-                  <ExternalLink size={16} /> Live Demo
-                </a>
+              <div className="project-actions">
+                {project.repo ? (
+                  <a href={project.repo} target="_blank" rel="noopener noreferrer"
+                    aria-label={`View ${project.title} source code on GitHub`}
+                    className="project-code-link">
+                    <Github size={16} /> Code
+                  </a>
+                ) : (
+                  <span className="project-unavailable" aria-label={`${project.title} source code unavailable`}>
+                    <Github size={16} /> Code unavailable
+                  </span>
+                )}
+                {project.demo === "chat" ? (
+                  <button onClick={onOpenChat} className="project-demo-link"
+                    aria-label="Open AI Portfolio Engine demo chat">
+                    <ExternalLink size={16} /> Live Demo
+                  </button>
+                ) : (
+                  <span className="project-unavailable" aria-label={`${project.title} demo unavailable`}>
+                    <ExternalLink size={16} /> Demo unavailable
+                  </span>
+                )}
               </div>
             </div>
           </motion.div>
